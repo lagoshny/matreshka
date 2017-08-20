@@ -51,18 +51,6 @@
       }
     },
     "libs": {
-      "polifyls": {
-        "dir": "./provided/scripts",
-        "files": [
-          "polyfills.ts"
-        ]
-      },
-      "scripts": {
-        "dir": "./provided/scripts",
-        "files": [
-          "vendors.ts"
-        ]
-      },
       "styles": {
         "dir": "./provided/css",
         "files": [
@@ -74,12 +62,19 @@
       "modules": true,
       "ts": [
         {
-          "dir": "./",
           "files": [
-            "main.ts"
+            "*.ts"
           ]
         }
-      ]
+      ],
+       "spec": [
+         {
+           "dir": "./",
+           "files": [
+             "*.spec.ts"
+           ]
+         }
+       ]
     },
     "resources": [
       {

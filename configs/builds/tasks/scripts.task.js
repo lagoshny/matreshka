@@ -10,6 +10,7 @@ const webpack3 = require('webpack');
 const webpackStream = require('webpack-stream');
 const pipedWebpack = require('piped-webpack');
 const del = require('del');
+const glob = require('glob');
 
 const buildConf = require('../../utils/paths.config');
 const helpers = require('../../utils/helpers.utils');
@@ -133,8 +134,7 @@ exports.copyVendors = function (opt) {
 };
 
 exports.jsBuild = function (opt) {
-    let needBuildNameFiles = buildConf.entries.scripts.ts.files.map(file => path.basename(file).replace(/\.[^.]+$/, ""));
-    console.log(needBuildNameFiles);
+    let needBuildNameFiles = glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, ""));
     return function jsBuild(done) {
         if (!opt || !opt.src || opt.src.length === 0) {
             done();
@@ -179,7 +179,12 @@ exports.jsBuild = function (opt) {
                         callback(null, file);
                     }),
                     webpackStream(require(opt.wbpConf), webpack3),
-                    $.if(helpers.isDevelopment(), gulp.dest(opt.devDst))
+                    $.if(helpers.isDevelopment(), gulp.dest(function (file) {
+                        if (/\.spec/.test(file.stem)) {
+                            return buildConf.folders.main.builds.temp.spec;
+                        }
+                        return opt.devDst;
+                    }))
                 )))
             .pipe($.if(helpers.isProduction(),
                 combiner(

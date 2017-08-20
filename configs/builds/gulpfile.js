@@ -54,7 +54,11 @@ const tasksConf = {
     },
     jsBuildConfigs: {
         entry: buildConf.entries.scripts,
-        src: [...buildConf.entries.libs.polifyls.files, ...buildConf.entries.scripts.js.files, ...buildConf.entries.scripts.ts.files].filter((entry) => /[^undefined]\S/.test(entry)),
+        src: [
+            ...buildConf.entries.libs.polifyls.files,
+            ...buildConf.entries.scripts.js.files,
+            ...buildConf.entries.scripts.ts.files,
+            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
         cache: helpers.buildCaches.scripts,
@@ -83,6 +87,11 @@ const tasksConf = {
         handleModules: buildConf.entries.scripts.modules,
         cache: helpers.buildCaches.vendors,
         wbpLibConf: buildConf.folders.configs.webpackLibsConf
+    },
+    testConfigs: {
+        src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
+        config: buildConf.folders.configs.karmaConfig,
+        wbpConf: buildConf.folders.configs.webpacTestConf
     },
     cssLintConfigs: {
         lint: buildConf.lints.css,
@@ -163,14 +172,22 @@ gulp.task('testWatch', function () {
     // gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js', statics.buildHtml(tasksConf.buildStaticConfig.html))).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
 });
 
-gulp.task('tst',
-    // gulp.series('testWatch')
-    // gulp.series('js', 'statics')
+if (buildConf.entries.scripts.spec.handle) {
+    const testTasks = require('./tasks/test.task');
+    gulp.task('tst', gulp.series('js', testTasks.testRun(tasksConf.testConfigs)));
+    // gulp.task('tst', gulp.series('js'));
+}
 
-    gulp.series('js')
-    // gulp.series(scripts.jsBuild(tasksConf.jsBuildConfigs))
-    // callback()
-);
+// gulp.task('tst', function (done) {
+//         done();
+//     }
+//     // gulp.series('testWatch')
+//     // gulp.series('js', 'statics')
+//
+//     // gulp.series('js')
+//     // gulp.series(scripts.jsBuild(tasksConf.jsBuildConfigs))
+//     // callback()
+// );
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;

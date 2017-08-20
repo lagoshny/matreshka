@@ -74,7 +74,10 @@ const defConf = {
         return this.cssProjectNeedBuilding;
     },
     get srcJsDir() {
-        return path.resolve(this.srcDir, './js');
+        return this.srcDir;
+    },
+    get srcSpecDir() {
+        return this.srcDir;
     },
     get jsProjectNeedBuilding() {
         return getProperty(userConf, 'entries.scripts.js') !== undefined;
@@ -83,7 +86,7 @@ const defConf = {
         return this.jsProjectNeedBuilding;
     },
     get srcTsDir() {
-        return path.resolve(this.srcDir, './ts');
+        return this.srcDir;
     },
     get tsProjectNeedBuilding() {
         return getProperty(userConf, 'entries.scripts.ts') !== undefined;
@@ -194,6 +197,8 @@ const defConf = {
 
 const buildWebpackFile = 'webpack.config.js';
 const buildWebpackDllFile = 'webpack.dll.config.js';
+const buildWebpackTestFile = 'webpack.test.config.js';
+const buildKarmaFile = 'karma.conf.js';
 const configsDirName = 'configs';
 const configsMainDir = path.resolve(currDir, configsDirName);
 const configsBuildDir = 'builds';
@@ -260,6 +265,9 @@ exports.folders = {
                 },
                 get cache() {
                     return path.resolve(this.dir, 'cache');
+                },
+                get spec() {
+                    return path.resolve(this.dir, 'spec');
                 }
             },
 
@@ -397,8 +405,10 @@ exports.folders = {
         dirName: configsDirName,
         path: configsMainDir,
         utils: path.resolve(configsMainDir, 'utils'),
+        karmaConfig: path.resolve(configsMainDir, `builds/${buildKarmaFile}`),
         webpackConf: path.resolve(configsMainDir, `builds/${buildWebpackFile}`),
-        webpackLibsConf: path.resolve(configsMainDir, `builds/${buildWebpackDllFile}`)
+        webpackLibsConf: path.resolve(configsMainDir, `builds/${buildWebpackDllFile}`),
+        webpacTestConf: path.resolve(configsMainDir, `builds/${buildWebpackTestFile}`)
     },
     dependencies: {
         node: path.resolve(currDir, 'node_modules'),
@@ -473,6 +483,49 @@ exports.entries = {
                 return path.basename(exports.entries.scripts.ts.files[0]).replace(/\.[^.]+$/, "");
             }
         },
+        spec: {
+            get handle() {
+                return this.files.length > 0;
+            },
+            get files() {
+                if (getProperty(userConf, 'entries.scripts.spec')) {
+                    if (exports.entries.scripts.ts.handle && exports.entries.scripts.js.handle) {
+                        return [
+                            // ...exports.entries.scripts.js.files.map(
+                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
+                            // ...exports.entries.scripts.ts.files.map(
+                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
+                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.ts'),
+                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js')];
+                    }
+                    if (exports.entries.scripts.ts.handle) {
+                        return [
+                            // ...exports.entries.scripts.ts.files.map(
+                            // (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
+                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.ts')];
+                    }
+                    if (exports.entries.scripts.js.handle) {
+                        return [
+                            // ...exports.entries.scripts.js.files.map(
+                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
+                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js')];
+                    }
+                }
+                return [];
+            },
+            get builded() {
+                if (this.handle) {
+                    return [
+                        ...exports.entries.scripts.js.files.map(
+                            (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
+                        ...exports.entries.scripts.ts.files.map(
+                            (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir).replace('.ts', '.js')),
+                        ...this.files.map(file => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.temp.spec))
+                    ]
+                }
+                return [];
+            }
+        },
         js: {
             get handle() {
                 return this.files.length > 0;
@@ -480,6 +533,9 @@ exports.entries = {
             get files() {
                 return getProperty(userConf, 'entries.scripts.js')
                     ? getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js') : [];
+                // return getProperty(userConf, 'entries.scripts.js')
+                //     ? [...getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js'),
+                //         `!${path.resolve(exports.folders.main.dir, '**/*.spec.js')}`] : [];
             }
         },
         ts: {
@@ -772,7 +828,9 @@ exports.manifest = {
     }
 };
 
-// console.log('LINTS: ' + JSON.stringify(exports.lints, null, 2));
+
+// console.log('TS: ' + JSON.stringify(exports.entries.scripts.ts.files, null, 2));
+// console.log('SPEC TS: ' + JSON.stringify(exports.entries.scripts.spec.files, null, 2));
 // console.log('SRC: ' + JSON.stringify(exports.folders.main.src, null, 2));
 // console.log('ANGULAR: ' + JSON.stringify(exports.angular, null, 2));
 // console.log('ENTRIES: ' + JSON.stringify(exports.entries, null, 2));

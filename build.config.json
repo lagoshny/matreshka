@@ -76,11 +76,17 @@
         {
           "dir": "./",
           "files": [
-            "test.ts", "main.ts"
+            "main.ts"
           ]
         }
       ],
       "spec": [
+        {
+          "dir": "./",
+          "files": [
+            "test"
+          ]
+        },
         {
           "dir": "./app",
           "files": [

@@ -58,8 +58,7 @@ const tasksConf = {
         src: [
             ...buildConf.entries.libs.polifyls.files,
             ...buildConf.entries.scripts.js.files,
-            ...buildConf.entries.scripts.ts.files,
-            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
+            ...buildConf.entries.scripts.ts.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
         cache: helpers.buildCaches.scripts,
@@ -90,9 +89,18 @@ const tasksConf = {
         wbpLibConf: buildConf.folders.configs.webpackLibsConf
     },
     testConfigs: {
-        src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
+        src: [
+            ...buildConf.entries.libs.polifyls.files,
+            ...buildConf.entries.scripts.js.files,
+            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         config: buildConf.folders.configs.karmaConfig,
-        handle: buildConf.entries.scripts.spec.handle
+        handle: buildConf.entries.scripts.spec.handle,
+        wbpConf: buildConf.folders.configs.webpackTestConf
+    },
+    jsTestCopyVendors: {
+        provided: buildConf.entries.libs,
+        devDst: buildConf.folders.main.builds.temp.spec,
+        prodDst: buildConf.folders.main.builds.prod.js
     },
     cssLintConfigs: {
         lint: buildConf.lints.css,
@@ -147,6 +155,7 @@ gulp.task('js', gulp.parallel(
         'buildVendors',
         scripts.copyVendors(tasksConf.jsCopyVendors),
         scripts.jsBuild(tasksConf.jsBuildConfigs),
+        scripts.copyVendors(tasksConf.jsTestCopyVendors),
         'test'
     ))
 );
@@ -174,7 +183,7 @@ gulp.task('testWatch', function () {
     // gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js', statics.buildHtml(tasksConf.buildStaticConfig.html))).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
 });
 
-gulp.task('tst', gulp.series('js', 'test'));
+gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;

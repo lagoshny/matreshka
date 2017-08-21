@@ -1,10 +1,4 @@
 /**
- * Created by Ilya Lagoshny (ilya@lagoshny.ru)
- *
- * Date: 20.08.2017 20:43
- */
-
-/**
  * Webpack configuration
  *
  * Created by Ilya Lagoshny (ilya@lagoshny.ru)
@@ -22,9 +16,10 @@ const helpers = require('../utils/helpers.utils');
 
 module.exports = {
     output: {
-        publicPath: helpers.isDevelopment() ? buildConf.folders.main.builds.dev.publicPath : buildConf.folders.main.builds.prod.publicPath,
+        publicPath: '/',
         filename: helpers.isDevelopment() ? '[name].js' : '[name].min.js',
     },
+    devtool: helpers.isDevelopment() ? 'source-map' : '',
     plugins: [
         new webpack3.NoEmitOnErrorsPlugin(),
         new webpack3.ContextReplacementPlugin(
@@ -45,6 +40,7 @@ module.exports = {
     },
     profile: true,
     bail: helpers.isProduction(),
+    // watch: helpers.isDevelopment()
 };
 
 
@@ -142,4 +138,16 @@ if (process.env.npm_config_info) {
     }
 }
 
+if (helpers.isProduction()) {
+    // Minimization JS files
+    module.exports.plugins.push(
+        new webpack3.optimize.UglifyJsPlugin({
+            mangle: {
+                keep_fnames: true
+            },
+            compress: true
+        })
+    );
+
+}
 

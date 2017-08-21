@@ -413,7 +413,7 @@ exports.folders = {
         karmaConfig: path.resolve(configsMainDir, `builds/${buildKarmaFile}`),
         webpackConf: path.resolve(configsMainDir, `builds/${buildWebpackFile}`),
         webpackLibsConf: path.resolve(configsMainDir, `builds/${buildWebpackDllFile}`),
-        webpacTestConf: path.resolve(configsMainDir, `builds/${buildWebpackTestFile}`)
+        webpackTestConf: path.resolve(configsMainDir, `builds/${buildWebpackTestFile}`)
     },
     dependencies: {
         node: path.resolve(currDir, 'node_modules'),

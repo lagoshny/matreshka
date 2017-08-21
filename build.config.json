@@ -51,6 +51,18 @@
       }
     },
     "libs": {
+      "polifyls": {
+        "dir": "./provided/scripts",
+        "files": [
+          "polyfills.ts"
+        ]
+      },
+      "scripts": {
+        "dir": "./provided/scripts",
+        "files": [
+          "vendors.ts"
+        ]
+      },
       "styles": {
         "dir": "./provided/css",
         "files": [
@@ -62,19 +74,20 @@
       "modules": true,
       "ts": [
         {
+          "dir": "./",
           "files": [
-            "*.ts"
+            "test.ts", "main.ts"
           ]
         }
       ],
-       "spec": [
-         {
-           "dir": "./",
-           "files": [
-             "*.spec.ts"
-           ]
-         }
-       ]
+      "spec": [
+        {
+          "dir": "./app",
+          "files": [
+            "*.spec.ts"
+          ]
+        }
+      ]
     },
     "resources": [
       {
@@ -94,10 +107,5 @@
     "inlineStyles": true,
     "lazyRoute": true,
     "redirectToIndex": true
-  },
-  "linting": {
-    "js": true,
-    "css": true,
-    "ts": true
   }
 }

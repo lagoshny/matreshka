@@ -232,8 +232,8 @@ if (helpers.isDevelopment()) {
     gulp.task('dev',
         gulp.series( 'dev:init',
             gulp.parallel('statics', 'js', 'css'),
-            statics.buildHtml(tasksConf.buildStaticConfig.html)
-            // gulp.parallel('watch', 'serve')
+            statics.buildHtml(tasksConf.buildStaticConfig.html),
+            gulp.parallel('watch', 'serve')
         )
     );
 }

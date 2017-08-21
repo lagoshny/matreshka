@@ -506,14 +506,27 @@ exports.entries = {
             },
             get builded() {
                 if (this.handle) {
-                    return [
+                    let files = [
                         ...exports.entries.libs.polifyls.files.map(
                             (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
                         ...exports.entries.libs.scripts.files.map(
                             (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
-                        path.resolve(exports.folders.main.builds.dev.js, '*.js'),
-                        ...this.files.map(file => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js'))
-                    ].filter((entry) => /[^undefined]\S/.test(entry))
+                    ];
+                    if (exports.entries.libs.polifyls.handle) {
+                        files.push(path.resolve(exports.folders.main.builds.dev.js, `${exports.entries.scripts.polyfillsOut}.js`));
+                    } else if (exports.entries.scripts.out) {
+                        files.push(path.resolve(exports.folders.main.builds.dev.js, `${exports.entries.scripts.out}.js`));
+                    } else {
+                        files.push(
+                            ...exports.entries.scripts.js.files.map(
+                                (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.js))
+                        );
+                        files.push(
+                            ...exports.entries.scripts.ts.files.map(
+                                (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.js).replace('.ts', '.js')))
+                    }
+                    files.push(...this.files.map(file => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js')));
+                    return files.filter((entry) => /[^undefined]\S/.test(entry));
                 }
                 return [];
             }

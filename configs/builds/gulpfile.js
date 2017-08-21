@@ -15,6 +15,7 @@ const helpers = require('../utils/helpers.utils');
 const statics = require('./tasks/static.task');
 const css = require('./tasks/css.task');
 const scripts = require('./tasks/scripts.task');
+const testTasks = require('./tasks/test.task');
 
 const tasksConf = {
     buildStaticConfig: {
@@ -91,7 +92,7 @@ const tasksConf = {
     testConfigs: {
         src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
         config: buildConf.folders.configs.karmaConfig,
-        wbpConf: buildConf.folders.configs.webpacTestConf
+        handle: buildConf.entries.scripts.spec.handle
     },
     cssLintConfigs: {
         lint: buildConf.lints.css,
@@ -136,7 +137,7 @@ gulp.task('statics', gulp.series(
 
 gulp.task('buildPolifyls', scripts.providedBuild(tasksConf.jsPolifylsConfigs));
 gulp.task('buildVendors', scripts.providedBuild(tasksConf.jsVendorsConfigs));
-
+gulp.task('test', testTasks.testRun(tasksConf.testConfigs));
 
 gulp.task('js', gulp.parallel(
     scripts.jsLint(tasksConf.jsLintConfigs),
@@ -145,7 +146,8 @@ gulp.task('js', gulp.parallel(
         'buildPolifyls',
         'buildVendors',
         scripts.copyVendors(tasksConf.jsCopyVendors),
-        scripts.jsBuild(tasksConf.jsBuildConfigs)
+        scripts.jsBuild(tasksConf.jsBuildConfigs),
+        'test'
     ))
 );
 
@@ -172,22 +174,7 @@ gulp.task('testWatch', function () {
     // gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js', statics.buildHtml(tasksConf.buildStaticConfig.html))).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
 });
 
-if (buildConf.entries.scripts.spec.handle) {
-    const testTasks = require('./tasks/test.task');
-    gulp.task('tst', gulp.series('js', testTasks.testRun(tasksConf.testConfigs)));
-    // gulp.task('tst', gulp.series('js'));
-}
-
-// gulp.task('tst', function (done) {
-//         done();
-//     }
-//     // gulp.series('testWatch')
-//     // gulp.series('js', 'statics')
-//
-//     // gulp.series('js')
-//     // gulp.series(scripts.jsBuild(tasksConf.jsBuildConfigs))
-//     // callback()
-// );
+gulp.task('tst', gulp.series('js', 'test'));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;
@@ -243,10 +230,10 @@ if (helpers.isDevelopment()) {
 
 
     gulp.task('dev',
-        gulp.series(clean(), 'dev:init',
+        gulp.series( 'dev:init',
             gulp.parallel('statics', 'js', 'css'),
-            statics.buildHtml(tasksConf.buildStaticConfig.html),
-            gulp.parallel('watch', 'serve')
+            statics.buildHtml(tasksConf.buildStaticConfig.html)
+            // gulp.parallel('watch', 'serve')
         )
     );
 }

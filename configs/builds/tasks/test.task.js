@@ -7,48 +7,33 @@
 
 const gulp = require('gulp');
 const karmaRunner = require('gulp-karma-runner');
-const karmaServer = require('karma').Server;
+const helpers = require('../../utils/helpers.utils');
 const $ = require('gulp-load-plugins')();
-// const webpack3 = require('webpack');
-// const webpackStream = require('webpack-stream');
-// const through2 = require('through2').obj;
-// const combiner = require('stream-combiner2').obj;
-// const buildConf = require('../../utils/paths.config');
-
 
 exports.testRun = function (opt) {
+    const tdd = process.env.npm_config_test && process.env.npm_config_test === 'tdd';
     return function testRun(done) {
-        console.log(opt.src);
+        if (!opt.handle) {
+            done();
+            return;
+        }
         return gulp.src(opt.src)
             .pipe($.plumber({
                 errorHandler: function (err) {
                     console.log(err.message);
+                    if (helpers.isProduction()) {
+                        console.log("\n\r\x1b[31mBuild is FAIL, you need check test which was fail, after you fix all tests you need run build again.");
+                        process.exit();
+                    }
                     this.emit('end');
                 }}))
             .pipe(karmaRunner.server({
                 configFile: opt.config,
-                autoWatch: false,
-                singleRun: true
-            }))
-    }
-};
-
-exports.testTdd = function (opt) {
-    return function testRun(done) {
-        return gulp.src(opt.src)
-            .pipe($.plumber({
-                errorHandler: function (err) {
-                    console.log(err.message);
-                    this.emit('end');
-                }}))
-            .pipe(karmaRunner.server({
-                configFile: opt.config,
-                // autoWatch: false,
-                singleRun: false
+                autoWatch: tdd,
+                singleRun: !tdd
             }))
             .on('data', function () {
                 done();
             })
     }
 };
-

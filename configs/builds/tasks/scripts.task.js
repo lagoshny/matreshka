@@ -134,7 +134,17 @@ exports.copyVendors = function (opt) {
 };
 
 exports.jsBuild = function (opt) {
-    let needBuildNameFiles = glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, ""));
+    let needBuildNameFiles = [];
+    if (buildConf.entries.libs.polifyls.handle) {
+        needBuildNameFiles.push(buildConf.entries.scripts.polyfillsOut);
+    } else if (buildConf.entries.scripts.ts.handle) {
+        needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
+    }
+    if (buildConf.entries.scripts.spec.handle) {
+        for (let file of buildConf.entries.scripts.spec.files) {
+            needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
+        }
+    }
     return function jsBuild(done) {
         if (!opt || !opt.src || opt.src.length === 0) {
             done();
@@ -172,9 +182,12 @@ exports.jsBuild = function (opt) {
             .pipe($.if(opt.handleModule,
                 combiner(
                     through2(function (file, enc, callback) {
-                        file.named = opt.entry.out || file.stem;
-                        if (buildConf.entries.libs.polifyls.handle && buildConf.entries.libs.polifyls.files.find(filePath => filePath === file.path)) {
+                        if (/\.spec\./.test(file.path)) {
+                            file.named = file.stem;
+                        } else if (buildConf.entries.libs.polifyls.handle) {
                             file.named = buildConf.entries.scripts.polyfillsOut;
+                        } else {
+                            file.named = opt.entry.out || file.stem;
                         }
                         callback(null, file);
                     }),
@@ -198,7 +211,6 @@ exports.jsBuild = function (opt) {
                 if (needBuildNameFiles.length === 0) {
                     done();
                 }
-
             })
     }
 };

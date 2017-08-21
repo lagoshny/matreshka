@@ -187,6 +187,9 @@ const defConf = {
     get redirectToIndex() {
         return false;
     },
+    get angularTest() {
+        return false;
+    },
     get modulesHandle() {
         return false;
     },
@@ -221,7 +224,6 @@ const linting = {
         return defConf.cssNeedLinting;
     },
     get js() {
-
         if (getProperty(userConf, 'linting.js') !== undefined) {
             return userConf.linting.js;
         }
@@ -311,6 +313,9 @@ exports.folders = {
                 get jsFiles() {
                     if (exports.entries.scripts.out) {
                         return [path.resolve(this.js, `${exports.entries.scripts.out}.js`)];
+                    }
+                    if (exports.entries.libs.polifyls.handle) {
+                        return [path.resolve(this.js, `${exports.entries.scripts.polyfillsOut}.js`)];
                     }
                     let tsFileNames = exports.entries.scripts.ts.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '.js'));
                     let jsFileNames = exports.entries.scripts.js.files.map(file => file.replace(path.dirname(file), this.js));
@@ -476,39 +481,25 @@ exports.entries = {
             if (exports.entries.scripts.out) {
                 return exports.entries.scripts.out;
             }
-            if (exports.entries.scripts.js.files && exports.entries.scripts.js.files.length > 0) {
-                return path.basename(exports.entries.scripts.js.files[0]).replace(/\.[^.]+$/, "");
-            }
-            if (exports.entries.scripts.ts.files && exports.entries.scripts.ts.files.length > 0) {
-                return path.basename(exports.entries.scripts.ts.files[0]).replace(/\.[^.]+$/, "");
-            }
+            return 'main';
         },
         spec: {
             get handle() {
-                return this.files.length > 0;
+                if (process.env.npm_config_test || (process.env.npm_config_test && process.env.npm_config_test === 'tdd')) {
+                    return !!getProperty(userConf, 'entries.scripts.spec');
+                }
+                return false;
             },
             get files() {
                 if (getProperty(userConf, 'entries.scripts.spec')) {
                     if (exports.entries.scripts.ts.handle && exports.entries.scripts.js.handle) {
-                        return [
-                            // ...exports.entries.scripts.js.files.map(
-                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
-                            // ...exports.entries.scripts.ts.files.map(
-                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
-                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.ts'),
-                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js')];
+                        return getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js|spec.ts');
                     }
                     if (exports.entries.scripts.ts.handle) {
-                        return [
-                            // ...exports.entries.scripts.ts.files.map(
-                            // (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
-                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.ts')];
+                        return getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.ts');
                     }
                     if (exports.entries.scripts.js.handle) {
-                        return [
-                            // ...exports.entries.scripts.js.files.map(
-                            //     (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
-                            ...getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js')];
+                        return getArrayPathsAsString(userConf.entries.scripts.spec, defConf.srcSpecDir, 'spec.js');
                     }
                 }
                 return [];
@@ -516,12 +507,13 @@ exports.entries = {
             get builded() {
                 if (this.handle) {
                     return [
-                        ...exports.entries.scripts.js.files.map(
-                            (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir)),
-                        ...exports.entries.scripts.ts.files.map(
-                            (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.dir).replace('.ts', '.js')),
-                        ...this.files.map(file => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.temp.spec))
-                    ]
+                        ...exports.entries.libs.polifyls.files.map(
+                            (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
+                        ...exports.entries.libs.scripts.files.map(
+                            (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
+                        path.resolve(exports.folders.main.builds.dev.js, '*.js'),
+                        ...this.files.map(file => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js'))
+                    ].filter((entry) => /[^undefined]\S/.test(entry))
                 }
                 return [];
             }
@@ -531,11 +523,14 @@ exports.entries = {
                 return this.files.length > 0;
             },
             get files() {
-                return getProperty(userConf, 'entries.scripts.js')
-                    ? getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js') : [];
-                // return getProperty(userConf, 'entries.scripts.js')
-                //     ? [...getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js'),
-                //         `!${path.resolve(exports.folders.main.dir, '**/*.spec.js')}`] : [];
+                if (getProperty(userConf, 'entries.scripts.js')) {
+                    let jsFiles = getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js');
+                    if (!exports.entries.scripts.spec.handle) {
+                        jsFiles.push(`!${path.resolve(exports.folders.main.dir, '**/*.spec.js')}`);
+                    }
+                    return jsFiles;
+                }
+                return [];
             }
         },
         ts: {
@@ -543,8 +538,14 @@ exports.entries = {
                 return this.files.length > 0;
             },
             get files() {
-                return getProperty(userConf, 'entries.scripts.ts')
-                    ? getArrayPathsAsString(userConf.entries.scripts.ts, defConf.srcTsDir, 'ts') : [];
+                if (getProperty(userConf, 'entries.scripts.ts')) {
+                    let tsFiles = getArrayPathsAsString(userConf.entries.scripts.ts, defConf.srcTsDir, 'ts');
+                    if (!exports.entries.scripts.spec.handle) {
+                        tsFiles.push(`!${path.resolve(exports.folders.main.dir, '**/*.spec.ts')}`);
+                    }
+                    return tsFiles;
+                }
+                return [];
             }
         }
     },
@@ -673,6 +674,10 @@ exports.angular = {
     get redirectToIndex() {
         return (getProperty(userConf, 'angular.redirectToIndex'))
             ? userConf.angular.redirectToIndex : defConf.redirectToIndex;
+    },
+    get test() {
+        return (getProperty(userConf, 'angular.test'))
+            ? userConf.angular.test : defConf.angularTest;
     }
 };
 
@@ -751,7 +756,7 @@ exports.lints = {
             if (!linting.js) {
                 return;
             }
-            return exports.entries.scripts.js.files;
+            return [...exports.entries.scripts.js.files, `!${path.resolve(exports.folders.main.dir, '**/*.spec.js')}`];
         },
         result: {},
         get cacheFile() {
@@ -766,7 +771,7 @@ exports.lints = {
             if (!linting.ts) {
                 return;
             }
-            return exports.entries.scripts.ts.files;
+            return [...exports.entries.scripts.ts.files, `!${path.resolve(exports.folders.main.dir, '**/*.spec.ts')}`];
         },
         result: {},
         get cacheFile() {
@@ -830,6 +835,7 @@ exports.manifest = {
 
 
 // console.log('TS: ' + JSON.stringify(exports.entries.scripts.ts.files, null, 2));
+// console.log('JS: ' + JSON.stringify(exports.entries.scripts.js.files, null, 2));
 // console.log('SPEC TS: ' + JSON.stringify(exports.entries.scripts.spec.files, null, 2));
 // console.log('SRC: ' + JSON.stringify(exports.folders.main.src, null, 2));
 // console.log('ANGULAR: ' + JSON.stringify(exports.angular, null, 2));
@@ -849,7 +855,7 @@ function getArrayPathsAsString(arrayOfFileObjects, defDir, defExt) {
                     if (extMatcher.test(file)) {
                         return path.resolve(exports.folders.main.src.dir, dir, file)
                     }
-                    return path.resolve(exports.folders.main.src.dir, dir, `${file}.${ext}`);
+                    return path.resolve(exports.folders.main.src.dir, dir, `${file}.${ext.split('|')[0]}`);
                 }))
             } else {
                 result.push(path.resolve(exports.folders.main.src.dir, dir, `*.${ext}`));

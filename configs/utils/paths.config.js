@@ -5,6 +5,8 @@ const userConf = require('../../build.config');
 /* Setup path for project's folders */
 const currDir = process.env.PWD ? process.env.PWD : __dirname;
 
+const testSuffix = 'test';
+
 /* Setup path and name for manifests files */
 const manifests = {
     dirName: 'manifest',
@@ -234,6 +236,10 @@ const linting = {
     }
 };
 
+exports.constants = {
+  testSuffix: testSuffix
+};
+
 exports.server = {
     get baseUrl() {
         return getProperty(userConf, 'server.baseUrl') || defConf.baseUrl;
@@ -265,8 +271,11 @@ exports.folders = {
                 get cache() {
                     return path.resolve(this.dir, 'cache');
                 },
+                get vendors() {
+                    return path.resolve(this.cache, 'vendors');
+                },
                 get spec() {
-                    return path.resolve(this.dir, 'spec');
+                    return path.resolve(this.dir, 'tests');
                 }
             },
 
@@ -504,11 +513,15 @@ exports.entries = {
             get builded() {
                 if (this.handle) {
                     let files = [
-                        ...exports.entries.libs.polifyls.test,
-                        // ...exports.entries.libs.polifyls.files.map(
-                        //     (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
+                        ...exports.entries.libs.polifyls.test.map(
+                            (file) => file.replace(path.dirname(file), exports.folders.main.builds.temp.vendors).replace('.ts', '.js')),
+                        ...exports.entries.libs.scripts.files.map(
+                            (file) => file.replace(path.dirname(file), exports.folders.main.builds.temp.vendors).replace('.ts', '.js')),
+                        ...exports.entries.scripts.ts.test.map(
+                            (file) => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js')),
                         // ...exports.entries.libs.scripts.files.map(
                         //     (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
+                        // path.resolve(exports.folders.main.builds.temp.spec, 'aaa.js')
                     ];
                     files.push(...this.files.map(file => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js')));
                     return files.filter((entry) => /[^undefined]\S/.test(entry));
@@ -529,11 +542,21 @@ exports.entries = {
                     return jsFiles;
                 }
                 return [];
+            },
+            get test() {
+                return getProperty(userConf, 'entries.scripts.ts')
+                    ? getArrayPathsAsString(userConf.entries.scripts.js, defConf.srcJsDir, 'js').filter(file => file.includes(testSuffix))
+                    : [];
             }
         },
         ts: {
             get handle() {
                 return this.files.length > 0;
+            },
+            get all() {
+                return getProperty(userConf, 'entries.scripts.ts')
+                    ? getArrayPathsAsString(userConf.entries.scripts.ts, defConf.srcTsDir, 'ts')
+                    : [];
             },
             get files() {
                 if (getProperty(userConf, 'entries.scripts.ts')) {
@@ -541,13 +564,13 @@ exports.entries = {
                     if (!exports.entries.scripts.spec.handle) {
                         tsFiles.push(`!${path.resolve(exports.folders.main.dir, '**/*.spec.ts')}`);
                     }
-                    return tsFiles.filter(file => !file.includes('.test.'));
+                    return tsFiles.filter(file => !file.includes(`.${testSuffix}.`));
                 }
                 return [];
             },
             get test() {
                 return getProperty(userConf, 'entries.scripts.ts')
-                    ? getArrayPathsAsString(userConf.entries.scripts.ts, defConf.srcTsDir, 'ts').filter(file => file.includes('.test.'))
+                    ? getArrayPathsAsString(userConf.entries.scripts.ts, defConf.srcTsDir, 'ts').filter(file => file.includes(`.${testSuffix}.`))
                     : [];
             }
         }
@@ -575,7 +598,7 @@ exports.entries = {
                 return (getProperty(userConf, 'entries.libs.polifyls.dir') !== undefined)
                     ? path.resolve(exports.folders.main.src.dir, userConf.entries.libs.polifyls.dir) : defConf.libPolifylsDir;
             },
-            get files() {
+            get all() {
                 if (getProperty(userConf, 'entries.libs.polifyls.files') !== undefined) {
                     if (Array.isArray(userConf.entries.libs.polifyls.files) && userConf.entries.libs.polifyls.files.length > 0) {
                         return userConf.entries.libs.polifyls.files.map(function (file) {
@@ -590,30 +613,16 @@ exports.entries = {
                                 return path.resolve(exports.entries.libs.polifyls.dir, `${file}${ext}`);
                             }
                             return path.resolve(exports.entries.libs.polifyls.dir, `${file}`);
-                        }).filter(file => !file.includes('.test.'));
+                        })
                     }
                 }
                 return [];
             },
+            get files() {
+                return this.all && this.all.length > 0 ? this.all.filter(file => !file.includes(`.${testSuffix}.`)) : [];
+            },
             get test() {
-                if (getProperty(userConf, 'entries.libs.polifyls.files') !== undefined) {
-                    if (Array.isArray(userConf.entries.libs.polifyls.files) && userConf.entries.libs.polifyls.files.length > 0) {
-                        return userConf.entries.libs.polifyls.files.map(function (file) {
-                            if (!/\.js$/.test(file) && !/\.ts$/.test(file)) {
-                                let ext = '.ts';
-                                if (exports.entries.scripts.js.handle && !exports.entries.scripts.ts.handle) {
-                                    ext = '.js';
-                                }
-                                if (!exports.entries.scripts.js.handle && exports.entries.scripts.ts.handle) {
-                                    ext = '.ts';
-                                }
-                                return path.resolve(exports.entries.libs.polifyls.dir, `${file}${ext}`);
-                            }
-                            return path.resolve(exports.entries.libs.polifyls.dir, `${file}`);
-                        }).filter(file => file.includes('.test.'));
-                    }
-                }
-                return [];
+                return this.all && this.all.length > 0 ? this.all.filter(file => file.includes(`.${testSuffix}.`)) : [];
             }
         },
         scripts: {

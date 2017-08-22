@@ -58,8 +58,7 @@ const tasksConf = {
         src: [
             ...buildConf.entries.libs.polifyls.files,
             ...buildConf.entries.scripts.js.files,
-            ...buildConf.entries.scripts.ts.files,
-            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
+            ...buildConf.entries.scripts.ts.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
         cache: helpers.buildCaches.scripts,
@@ -71,7 +70,6 @@ const tasksConf = {
         entry: {},
         src: [
             ...buildConf.entries.libs.polifyls.test,
-            // ...buildConf.entries.scripts.js.files,
             ...buildConf.entries.scripts.ts.test,
             ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
@@ -79,7 +77,8 @@ const tasksConf = {
         cache: helpers.buildCaches.scripts,
         devDst: buildConf.folders.main.builds.temp.spec,
         prodDst: buildConf.folders.main.builds.temp.spec,
-        wbpConf: buildConf.folders.configs.webpackTestConf
+        wbpConf: buildConf.folders.configs.webpackTestConf,
+        test: true
     },
     jsCopyVendors: {
         provided: buildConf.entries.libs,
@@ -88,13 +87,12 @@ const tasksConf = {
     },
     jsPolifylsConfigs: {
         entry: buildConf.entries.libs.polifyls,
-        src: [...buildConf.entries.libs.polifyls.files].filter((entry) => /[^undefined]\S/.test(entry)),
+        src: [...buildConf.entries.libs.polifyls.files, ...buildConf.entries.libs.polifyls.test].filter((entry) => /[^undefined]\S/.test(entry)),
         dst: buildConf.folders.main.builds.prod.js,
         handleModules: buildConf.entries.scripts.modules,
         cache: helpers.buildCaches.polifyls,
         wbpLibConf: buildConf.folders.configs.webpackLibsConf
     },
-
     jsVendorsConfigs: {
         entry: buildConf.entries.libs.scripts,
         src: [...buildConf.entries.libs.scripts.files].filter((entry) => /[^undefined]\S/.test(entry)),
@@ -104,16 +102,10 @@ const tasksConf = {
         wbpLibConf: buildConf.folders.configs.webpackLibsConf
     },
     testConfigs: {
-        src: [
-            ...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
+        src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
         config: buildConf.folders.configs.karmaConfig,
         handle: buildConf.entries.scripts.spec.handle,
         wbpConf: buildConf.folders.configs.webpackTestConf
-    },
-    jsTestCopyVendors: {
-        provided: buildConf.entries.libs,
-        devDst: buildConf.folders.main.builds.temp.spec,
-        prodDst: buildConf.folders.main.builds.prod.js
     },
     cssLintConfigs: {
         lint: buildConf.lints.css,
@@ -168,6 +160,7 @@ gulp.task('js', gulp.parallel(
         'buildVendors',
         scripts.copyVendors(tasksConf.jsCopyVendors),
         scripts.jsBuild(tasksConf.jsBuildConfigs),
+        scripts.jsBuild(tasksConf.jsTestBuildConfigs),
         'test'
     ))
 );
@@ -198,7 +191,7 @@ gulp.task('testWatch', function () {
 });
 
 // gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
-gulp.task('tst', gulp.series(scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
+gulp.task('tst', gulp.series('buildPolifyls', 'buildVendors', scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;

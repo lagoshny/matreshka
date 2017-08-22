@@ -39,7 +39,7 @@ module.exports = {
     },
     profile: true,
     bail: helpers.isProduction(),
-    // watch: helpers.isDevelopment()
+    watch: helpers.isDevelopment()
 };
 
 

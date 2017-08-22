@@ -127,7 +127,7 @@ exports.jsLint = function (opt) {
 
 exports.copyVendors = function (opt) {
     return function copyVendors() {
-        return gulp.src([`${opt.provided.cache.dir}/*.js`, `${opt.provided.cache.dir}/*.js`], {allowEmpty: true})
+        return gulp.src([`${opt.provided.cache.dir}/*.js`, `!${opt.provided.cache.dir}/*.${helpers.constants.testSuffix}.js`], {allowEmpty: true})
             .pipe($.cond(helpers.mode.isDebug(), $.debug({title: 'Copy vendors'})))
             .pipe(gulp.dest(helpers.isDevelopment() ? opt.devDst : opt.prodDst))
     }
@@ -136,14 +136,17 @@ exports.copyVendors = function (opt) {
 exports.jsBuild = function (opt) {
     let needBuildNameFiles = [];
     let polyfillsFile = {};
-    if (buildConf.entries.libs.polifyls.handle) {
-        needBuildNameFiles.push(buildConf.entries.scripts.polyfillsOut);
-    } else if (buildConf.entries.scripts.ts.handle) {
-        needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
-    }
-    if (buildConf.entries.scripts.spec.handle) {
-        for (let file of buildConf.entries.scripts.spec.files) {
-            needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
+    if (!opt.test) {
+        if (buildConf.entries.libs.polifyls.handle) {
+            needBuildNameFiles.push(buildConf.entries.scripts.polyfillsOut);
+        } else if (buildConf.entries.scripts.ts.handle) {
+            needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
+        }
+    } else {
+        if (buildConf.entries.scripts.spec.handle) {
+            for (let file of buildConf.entries.scripts.spec.files) {
+                needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
+            }
         }
     }
     return function jsBuild(done) {
@@ -183,13 +186,15 @@ exports.jsBuild = function (opt) {
             .pipe($.if(opt.handleModule,
                 combiner(
                     through2(function (file, enc, callback) {
-                        if (buildConf.entries.libs.polifyls.handle && buildConf.entries.libs.polifyls.test.find(filePath => filePath === file.path)) {
+                        if (buildConf.entries.libs.polifyls.handle
+                            && buildConf.entries.libs.polifyls.all.find(filePath => filePath === file.path)) {
                             polyfillsFile = file;
                             callback();
                             return;
                         }
                         /** We need add polyfills to test main files */
-                        if (/\.test\./.test(file.path)) {
+                        if (buildConf.entries.libs.polifyls.handle && helpers.constants.testSuffixPattern.test(file.path)) {
+                            console.log(file.path);
                             file.named = file.stem;
                             polyfillsFile.named = file.stem;
                             this.push(polyfillsFile);
@@ -206,8 +211,11 @@ exports.jsBuild = function (opt) {
                         }
                         /** If we use polyfills, we don't save file names, and we do one file */
                         if (buildConf.entries.libs.polifyls.handle) {
-                            file.named = buildConf.entries.scripts.polyfillsOut;
-                            callback(null, file);
+                            file.named = file.stem;
+                            polyfillsFile.named = file.stem;
+                            this.push(polyfillsFile);
+                            this.push(file);
+                            callback();
                             return;
                         }
                         /** Else we do file name as out, or their original name */

@@ -40,6 +40,11 @@ exports.createFolder = function (folderName) {
     mkdirp.sync(folderName);
 };
 
+exports.constants = {
+  testSuffix: buildConf.constants.testSuffix,
+  testSuffixPattern: new RegExp(`.${buildConf.constants.testSuffix}.`)
+};
+
 
 exports.buildCaches = {
     html: {

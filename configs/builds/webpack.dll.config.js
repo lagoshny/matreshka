@@ -12,7 +12,7 @@ const helpers = require('../utils/helpers.utils');
 module.exports = {
     output: {
         filename: '[name].js',
-        library: '[name]'
+        library: ['provided','[name]']
     },
     devtool: helpers.isDevelopment() ? 'source-map' : '',
     plugins: [
@@ -23,7 +23,7 @@ module.exports = {
         ),
         new webpack3.DllPlugin({
             path: path.resolve('manifest', '[name].manifest.json'),
-            name: '[name]'
+            name: "provided['[name]']"
         })
     ],
     resolve: {

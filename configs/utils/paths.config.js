@@ -187,9 +187,6 @@ const defConf = {
     get redirectToIndex() {
         return false;
     },
-    get angularTest() {
-        return false;
-    },
     get modulesHandle() {
         return false;
     },
@@ -490,6 +487,12 @@ exports.entries = {
                 }
                 return false;
             },
+            get main() {
+              if (this.handle) {
+                  return this.files[0];
+              }
+              return '';
+            },
             get files() {
                 if (getProperty(userConf, 'entries.scripts.spec')) {
                     if (exports.entries.scripts.ts.handle && exports.entries.scripts.js.handle) {
@@ -512,19 +515,6 @@ exports.entries = {
                         ...exports.entries.libs.scripts.files.map(
                             (file) => file.replace(path.dirname(file), exports.folders.main.builds.dev.js).replace('.ts', '.js')),
                     ];
-                    if (exports.entries.libs.polifyls.handle) {
-                        files.push(path.resolve(exports.folders.main.builds.dev.js, `${exports.entries.scripts.polyfillsOut}.js`));
-                    } else if (exports.entries.scripts.out) {
-                        files.push(path.resolve(exports.folders.main.builds.dev.js, `${exports.entries.scripts.out}.js`));
-                    } else {
-                        files.push(
-                            ...exports.entries.scripts.js.files.map(
-                                (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.js))
-                        );
-                        files.push(
-                            ...exports.entries.scripts.ts.files.map(
-                                (file) => file.replace(exports.folders.main.src.dir, exports.folders.main.builds.dev.js).replace('.ts', '.js')))
-                    }
                     files.push(...this.files.map(file => file.replace(path.dirname(file), exports.folders.main.builds.temp.spec).replace('.ts', '.js')));
                     return files.filter((entry) => /[^undefined]\S/.test(entry));
                 }
@@ -687,10 +677,6 @@ exports.angular = {
     get redirectToIndex() {
         return (getProperty(userConf, 'angular.redirectToIndex'))
             ? userConf.angular.redirectToIndex : defConf.redirectToIndex;
-    },
-    get test() {
-        return (getProperty(userConf, 'angular.test'))
-            ? userConf.angular.test : defConf.angularTest;
     }
 };
 
@@ -848,7 +834,6 @@ exports.manifest = {
 
 
 // console.log('TS: ' + JSON.stringify(exports.entries.scripts.ts.files, null, 2));
-// console.log('JS: ' + JSON.stringify(exports.entries.scripts.js.files, null, 2));
 // console.log('SPEC TS: ' + JSON.stringify(exports.entries.scripts.spec.files, null, 2));
 // console.log('SRC: ' + JSON.stringify(exports.folders.main.src, null, 2));
 // console.log('ANGULAR: ' + JSON.stringify(exports.angular, null, 2));

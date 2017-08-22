@@ -41,33 +41,33 @@ exports.testRun = function (opt) {
                     }
                     this.emit('end');
                 }}))
-            .pipe(
-                combiner(
-                    through2(function (file, enc, callback) {
-                        if (/test\.spec\.ts/.test(file.path)) {
-                            console.log(file.path);
-                            file.named = buildConf.entries.scripts.polyfillsOut;
-                        }
-                       else if (/polyfills\.ts/.test(file.path)) {
-                            file.named = buildConf.entries.scripts.polyfillsOut;
-                        }
-                        else if (/\.spec\./.test(file.path)) {
-                            file.named = file.stem;
-                        } else {
-                            file.named = file.stem;
-                        }
-                        callback(null, file);
-                    }),
-                    webpackStream(require(opt.wbpConf), webpack3),
-                    $.if(helpers.isDevelopment(), gulp.dest(function (file) {
-                            return buildConf.folders.main.builds.temp.spec;
-                    }))
-                )
-            )
-            .pipe(gulp.src([`${buildConf.folders.main.builds.temp.spec}/polyfills.js`,
-                `${buildConf.folders.main.builds.temp.spec}/vendors.js`,
-                `${buildConf.folders.main.builds.temp.spec}/main.js`,
-                `${buildConf.folders.main.builds.temp.spec}/*.spec.js`]))
+            // .pipe(
+            //     combiner(
+            //         through2(function (file, enc, callback) {
+            //             if (/test\.spec\.ts/.test(file.path)) {
+            //                 console.log(file.path);
+            //                 file.named = buildConf.entries.scripts.polyfillsOut;
+            //             }
+            //            else if (/polyfills\.ts/.test(file.path)) {
+            //                 file.named = buildConf.entries.scripts.polyfillsOut;
+            //             }
+            //             else if (/\.spec\./.test(file.path)) {
+            //                 file.named = file.stem;
+            //             } else {
+            //                 file.named = file.stem;
+            //             }
+            //             callback(null, file);
+            //         }),
+            //         webpackStream(require(opt.wbpConf), webpack3),
+            //         $.if(helpers.isDevelopment(), gulp.dest(function (file) {
+            //                 return buildConf.folders.main.builds.temp.spec;
+            //         }))
+            //     )
+            // )
+            // .pipe(gulp.src([`${buildConf.folders.main.builds.temp.spec}/polyfills.js`,
+            //     `${buildConf.folders.main.builds.temp.spec}/vendors.js`,
+            //     `${buildConf.folders.main.builds.temp.spec}/main.js`,
+            //     `${buildConf.folders.main.builds.temp.spec}/*.spec.js`]))
             .pipe(karmaRunner.server({
                 configFile: opt.config,
                 autoWatch: tdd,

@@ -135,6 +135,7 @@ exports.copyVendors = function (opt) {
 
 exports.jsBuild = function (opt) {
     let needBuildNameFiles = [];
+    let polyfillsFile = {};
     if (buildConf.entries.libs.polifyls.handle) {
         needBuildNameFiles.push(buildConf.entries.scripts.polyfillsOut);
     } else if (buildConf.entries.scripts.ts.handle) {
@@ -182,13 +183,33 @@ exports.jsBuild = function (opt) {
             .pipe($.if(opt.handleModule,
                 combiner(
                     through2(function (file, enc, callback) {
+                        /** We need add polyfills to test main files */
+                        if (buildConf.entries.scripts.spec.main
+                            && buildConf.entries.scripts.spec.main === file.path) {
+                            file.named = file.stem;
+                            polyfillsFile.named = file.stem;
+                            this.push(polyfillsFile);
+                            this.push(file);
+                            callback();
+                            return;
+                        }
+                        /** For all test files we save their names */
                         if (/\.spec\./.test(file.path)) {
                             file.named = file.stem;
-                        } else if (buildConf.entries.libs.polifyls.handle) {
-                            file.named = buildConf.entries.scripts.polyfillsOut;
-                        } else {
-                            file.named = opt.entry.out || file.stem;
+                            callback(null, file);
+                            return;
                         }
+                        /** If we use polyfills, we don't save file names, and we do one file */
+                        if (buildConf.entries.libs.polifyls.handle) {
+                            file.named = buildConf.entries.scripts.polyfillsOut;
+                            if (buildConf.entries.libs.polifyls.files.find(filePath => filePath === file.path)) {
+                                polyfillsFile = file;
+                            }
+                            callback(null, file);
+                            return;
+                        }
+                        /** Else we do file name as out, or their original name */
+                        file.named = opt.entry.out || file.stem;
                         callback(null, file);
                     }),
                     webpackStream(require(opt.wbpConf), webpack3),
@@ -236,7 +257,7 @@ exports.providedBuild = function (opt) {
                 opt.cache.needRebuild = !(opt.cache.lastModify[fullPathToFoundedFile].mtime === foundedFileStats.mtime.toJSON());
             }
         } else {
-            opt.cache.lastModify= {};
+            opt.cache.lastModify = {};
             // console.log('aaaa');
         }
     } catch (e) {

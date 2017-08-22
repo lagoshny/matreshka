@@ -58,7 +58,8 @@ const tasksConf = {
         src: [
             ...buildConf.entries.libs.polifyls.files,
             ...buildConf.entries.scripts.js.files,
-            ...buildConf.entries.scripts.ts.files].filter((entry) => /[^undefined]\S/.test(entry)),
+            ...buildConf.entries.scripts.ts.files,
+            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
         cache: helpers.buildCaches.scripts,
@@ -90,9 +91,7 @@ const tasksConf = {
     },
     testConfigs: {
         src: [
-            ...buildConf.entries.libs.polifyls.files,
-            ...buildConf.entries.scripts.js.files,
-            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
+            ...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
         config: buildConf.folders.configs.karmaConfig,
         handle: buildConf.entries.scripts.spec.handle,
         wbpConf: buildConf.folders.configs.webpackTestConf
@@ -155,10 +154,11 @@ gulp.task('js', gulp.parallel(
         'buildVendors',
         scripts.copyVendors(tasksConf.jsCopyVendors),
         scripts.jsBuild(tasksConf.jsBuildConfigs),
-        scripts.copyVendors(tasksConf.jsTestCopyVendors),
         'test'
     ))
 );
+
+gulp.task('test', testTasks.testRun(tasksConf.testConfigs));
 
 gulp.task('css', gulp.series(
     css.cssLint(tasksConf.cssLintConfigs),
@@ -239,7 +239,7 @@ if (helpers.isDevelopment()) {
 
 
     gulp.task('dev',
-        gulp.series( 'dev:init',
+        gulp.series('dev:init',
             gulp.parallel('statics', 'js', 'css'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
             gulp.parallel('watch', 'serve')

@@ -67,6 +67,20 @@ const tasksConf = {
         prodDst: buildConf.folders.main.builds.prod.js,
         wbpConf: buildConf.folders.configs.webpackConf
     },
+    jsTestBuildConfigs: {
+        entry: {},
+        src: [
+            ...buildConf.entries.libs.polifyls.test,
+            // ...buildConf.entries.scripts.js.files,
+            ...buildConf.entries.scripts.ts.test,
+            ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
+        handleModule: buildConf.entries.scripts.modules,
+        provided: buildConf.entries.libs,
+        cache: helpers.buildCaches.scripts,
+        devDst: buildConf.folders.main.builds.temp.spec,
+        prodDst: buildConf.folders.main.builds.temp.spec,
+        wbpConf: buildConf.folders.configs.webpackTestConf
+    },
     jsCopyVendors: {
         provided: buildConf.entries.libs,
         devDst: buildConf.folders.main.builds.dev.js,
@@ -183,7 +197,8 @@ gulp.task('testWatch', function () {
     // gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js', statics.buildHtml(tasksConf.buildStaticConfig.html))).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
 });
 
-gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
+// gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
+gulp.task('tst', gulp.series(scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;

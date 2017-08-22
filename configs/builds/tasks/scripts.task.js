@@ -183,9 +183,13 @@ exports.jsBuild = function (opt) {
             .pipe($.if(opt.handleModule,
                 combiner(
                     through2(function (file, enc, callback) {
+                        if (buildConf.entries.libs.polifyls.handle && buildConf.entries.libs.polifyls.test.find(filePath => filePath === file.path)) {
+                            polyfillsFile = file;
+                            callback();
+                            return;
+                        }
                         /** We need add polyfills to test main files */
-                        if (buildConf.entries.scripts.spec.main
-                            && buildConf.entries.scripts.spec.main === file.path) {
+                        if (/\.test\./.test(file.path)) {
                             file.named = file.stem;
                             polyfillsFile.named = file.stem;
                             this.push(polyfillsFile);
@@ -193,6 +197,7 @@ exports.jsBuild = function (opt) {
                             callback();
                             return;
                         }
+
                         /** For all test files we save their names */
                         if (/\.spec\./.test(file.path)) {
                             file.named = file.stem;
@@ -202,9 +207,6 @@ exports.jsBuild = function (opt) {
                         /** If we use polyfills, we don't save file names, and we do one file */
                         if (buildConf.entries.libs.polifyls.handle) {
                             file.named = buildConf.entries.scripts.polyfillsOut;
-                            if (buildConf.entries.libs.polifyls.files.find(filePath => filePath === file.path)) {
-                                polyfillsFile = file;
-                            }
                             callback(null, file);
                             return;
                         }

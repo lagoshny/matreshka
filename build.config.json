@@ -54,7 +54,7 @@
       "polifyls": {
         "dir": "./provided/scripts",
         "files": [
-          "polyfills.ts"
+          "polyfills.ts", "polyfills.test.ts"
         ]
       },
       "scripts": {
@@ -76,17 +76,11 @@
         {
           "dir": "./",
           "files": [
-            "main.ts"
+            "main.ts", "main.test.ts"
           ]
         }
       ],
       "spec": [
-        {
-          "dir": "./",
-          "files": [
-            "test"
-          ]
-        },
         {
           "dir": "./app",
           "files": [

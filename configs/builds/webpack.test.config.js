@@ -16,10 +16,9 @@ const helpers = require('../utils/helpers.utils');
 
 module.exports = {
     output: {
-        publicPath: '/',
-        filename: helpers.isDevelopment() ? '[name].js' : '[name].min.js',
+        publicPath: '',
+        filename: '[name].js',
     },
-    devtool: helpers.isDevelopment() ? 'source-map' : '',
     plugins: [
         new webpack3.NoEmitOnErrorsPlugin(),
         new webpack3.ContextReplacementPlugin(
@@ -112,10 +111,10 @@ if (buildConf.entries.scripts.ts.handle) {
         tsLoader.use.push('angular2-router-loader');
     }
 }
-if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.manifest.json'))) {
+if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))) {
     module.exports.plugins.push(
         new webpack3.DllReferencePlugin({
-            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.manifest.json'))
+            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))
         })
     )
 }
@@ -148,6 +147,5 @@ if (helpers.isProduction()) {
             compress: true
         })
     );
-
 }
 

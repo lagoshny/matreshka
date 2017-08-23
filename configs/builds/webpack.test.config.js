@@ -13,6 +13,22 @@ const fs = require('fs');
 
 const buildConf = require('../utils/paths.config');
 const helpers = require('../utils/helpers.utils');
+const watchFilePlugin = require('watchfile-webpack-plugin');
+
+
+function MyExampleWebpackPlugin() {
+
+};
+
+// Defines `apply` method in it's prototype.
+MyExampleWebpackPlugin.prototype.apply = function(compiler) {
+        compiler.plugin("after-compile", function(compilation) {
+                compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir, '**/*.*'));
+            console.log(compilation.fileDependencies);
+            console.log(compilation.contextDependencies);
+
+        });
+};
 
 module.exports = {
     output: {
@@ -24,7 +40,8 @@ module.exports = {
         new webpack3.ContextReplacementPlugin(
             /angular([\\\/])core([\\\/])@angular/,
             path.resolve(__dirname, '../src')
-        )
+        ),
+        new MyExampleWebpackPlugin()
     ],
     module: {
         rules: []

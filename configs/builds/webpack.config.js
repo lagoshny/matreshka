@@ -40,8 +40,10 @@ module.exports = {
     },
     profile: true,
     bail: helpers.isProduction(),
-    watch: helpers.isDevelopment()
-};
+    watch: helpers.isDevelopment(),
+    watchOptions: {
+        poll: 1000
+    }};
 
 
 if (buildConf.entries.scripts.js.handle) {
@@ -126,6 +128,7 @@ if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendo
         })
     )
 }
+
 
 if (process.env.npm_config_info) {
     module.exports.stats = {

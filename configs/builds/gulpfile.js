@@ -191,7 +191,8 @@ gulp.task('testWatch', function () {
 });
 
 // gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
-gulp.task('tst', gulp.series('buildPolifyls', 'buildVendors', scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
+// gulp.task('tst', gulp.series('buildPolifyls', 'buildVendors', scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
+gulp.task('tst', gulp.series(scripts.tst()));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;

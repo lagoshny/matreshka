@@ -10,6 +10,7 @@
 const path = require('path');
 const webpack3 = require('webpack');
 const fs = require('fs');
+const del = require('del');
 
 const buildConf = require('../utils/paths.config');
 const helpers = require('../utils/helpers.utils');
@@ -29,15 +30,43 @@ MyExampleWebpackPlugin.prototype.apply = function(compiler) {
         });
 
         compiler.plugin('watch-run', function (compilation, callback) {
-            let fileChanged = Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)[1];
-            let options = compilation.compiler.options;
-            if (fileChanged && /\.ts|\.js/.test(fileChanged)) {
-                if (!options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')]) {
-                    options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')] = [fileChanged];
-                    compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+            console.log(compilation.compiler.watchFileSystem.watcher);
+            if (compilation.compiler.watchFileSystem.watcher.mtimes) {
+                let options = compilation.compiler.options;
+                for (let file of Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)) {
+                    if (/\.ts|\.js/.test(file) && !/___jb_tmp___/.test(file)) {
+                        if (compilation.compiler.watchFileSystem.watcher.mtimes[file] === null) {
+                            delete options.entry[path.basename(file).replace(path.extname(file), '')];
+                            // for (let watcher of compilation.compiler.watchFileSystem.watcher.fileWatchers) {
+                            //     if (watcher.path === file) {
+                            //         console.log('DELE ' +  watcher.path);
+                            //         delete compilation.compiler.watchFileSystem.watcher.fileWatchers[watcher];
+                            //     }
+                            // }
+                            // compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                            console.log(options.entry);
+                            compilation.compiler.watchFileSystem.watcher.mtimes = {};
+                            // compiler.options = new webpack3.WebpackOptionsApply().process(options, compiler);
+                            del.sync(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
+                        }
+                        if (!options.entry[path.basename(file).replace(path.extname(file), '')]) {
+                            options.entry[path.basename(file).replace(path.extname(file), '')] = [file];
+                            compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                        }
+                    }
                 }
-                // console.log(compilation.compiler.options.entry);
+
             }
+            // let fileChanged = Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)[1];
+            // console.log(compilation.compiler.watchFileSystem.watcher.mtimes);
+            // let options = compilation.compiler.options;
+            // if (fileChanged && /\.ts|\.js/.test(fileChanged)) {
+            //     if (!options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')]) {
+            //         options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')] = [fileChanged];
+            //         compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+            //     }
+            //     // console.log(compilation.compiler.options.entry);
+            // }
             callback();
         })
 };

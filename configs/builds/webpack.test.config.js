@@ -13,7 +13,6 @@ const fs = require('fs');
 
 const buildConf = require('../utils/paths.config');
 const helpers = require('../utils/helpers.utils');
-const watchFilePlugin = require('watchfile-webpack-plugin');
 
 
 function MyExampleWebpackPlugin() {
@@ -22,12 +21,25 @@ function MyExampleWebpackPlugin() {
 
 // Defines `apply` method in it's prototype.
 MyExampleWebpackPlugin.prototype.apply = function(compiler) {
-        compiler.plugin("after-compile", function(compilation) {
-                compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir, '**/*.*'));
-            console.log(compilation.fileDependencies);
-            console.log(compilation.contextDependencies);
-
+        compiler.plugin("after-compile", function(compilation, callback) {
+                compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir));
+            // console.log(compilation);
+            // console.log(compilation.contextDependencies);
+            callback();
         });
+
+        compiler.plugin('watch-run', function (compilation, callback) {
+            let fileChanged = Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)[1];
+            let options = compilation.compiler.options;
+            if (fileChanged && /\.ts|\.js/.test(fileChanged)) {
+                if (!options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')]) {
+                    options.entry[path.basename(fileChanged).replace(path.extname(fileChanged), '')] = [fileChanged];
+                    compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                }
+                // console.log(compilation.compiler.options.entry);
+            }
+            callback();
+        })
 };
 
 module.exports = {
@@ -128,20 +140,20 @@ if (buildConf.entries.scripts.ts.handle) {
         tsLoader.use.push('angular2-router-loader');
     }
 }
-if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))) {
-    module.exports.plugins.push(
-        new webpack3.DllReferencePlugin({
-            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))
-        })
-    )
-}
-if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))) {
-    module.exports.plugins.push(
-        new webpack3.DllReferencePlugin({
-            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))
-        })
-    )
-}
+// if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))) {
+//     module.exports.plugins.push(
+//         new webpack3.DllReferencePlugin({
+//             manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))
+//         })
+//     )
+// }
+// if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))) {
+//     module.exports.plugins.push(
+//         new webpack3.DllReferencePlugin({
+//             manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))
+//         })
+//     )
+// }
 
 if (process.env.npm_config_info) {
     module.exports.stats = {

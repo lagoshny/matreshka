@@ -69,8 +69,8 @@ const tasksConf = {
     jsTestBuildConfigs: {
         entry: {},
         src: [
-            ...buildConf.entries.libs.polifyls.test,
-            ...buildConf.entries.scripts.ts.test,
+            // ...buildConf.entries.libs.polifyls.test,
+            // ...buildConf.entries.scripts.ts.test,
             ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,

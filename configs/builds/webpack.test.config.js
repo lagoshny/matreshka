@@ -14,49 +14,122 @@ const del = require('del');
 
 const buildConf = require('../utils/paths.config');
 const helpers = require('../utils/helpers.utils');
-
+const CircularJSON = require('circular-json');
 
 function MyExampleWebpackPlugin() {
+    this.deletedFile = 1;
 
 };
 
+let deletedFile = 1;
+let changeFileName;
 // Defines `apply` method in it's prototype.
 MyExampleWebpackPlugin.prototype.apply = function(compiler) {
         compiler.plugin("after-compile", function(compilation, callback) {
-                compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir));
+                // compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir));
+                compilation.fileDependencies.push('D:\\Development\\Projects\\IntelijIDEA\\matryoshka\\main\\src\\123.ts');
+                compilation.fileDependencies.push('D:\\Development\\Projects\\IntelijIDEA\\matryoshka\\main\\src\\a2.ts');
+
+            if (deletedFile === 4) {
+                // console.log("DELETED");
+                // compilation.contextDependencies = [];
+                // compilation.fileDependencies = [];
+            }
             // console.log(compilation);
             // console.log(compilation.contextDependencies);
             callback();
         });
 
+
+
+        compiler.plugin('invalid', function (fileName, changeTime) {
+            // console.log('FILE: ' + fileName + ' CHANGE TIME: ' + changeTime);
+            changeFileName = fileName;
+        });
+        
         compiler.plugin('watch-run', function (compilation, callback) {
-            console.log(compilation.compiler.watchFileSystem.watcher);
-            if (compilation.compiler.watchFileSystem.watcher.mtimes) {
+
+            console.log(compilation.compiler.watchFileSystem);
+           compilation.compiler.watchFileSystem.watcher.once("remove", function(mtime, type) {
+                console.log('FILE REMOVED: ' + type);
+                // this._onChange(file, mtime, file, type);
+            });
+            compilation.compiler.watchFileSystem.watcher.once("aggregated", function(mtime, type) {
+                console.log('FILE CHANGED: ' + type);
+                // this._onChange(file, mtime, file, type);
+            });
+
+            deletedFile++;
+            // console.log(CircularJSON.stringify(compilation.compiler.files));
+            // console.log(compilation.compiler.watchFileSystem.watcher);
+            // console.log(CircularJSON.stringify(compilation.compiler.inputFileSystem._statStorage.levels));
+            // console.log(CircularJSON.stringify(compilation.assets));
+            if (compilation.compiler.watchFileSystem.watcher.mtimes !== {}) {
+                console.log('aaaa');
+
                 let options = compilation.compiler.options;
                 for (let file of Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)) {
+
+
                     if (/\.ts|\.js/.test(file) && !/___jb_tmp___/.test(file)) {
                         if (compilation.compiler.watchFileSystem.watcher.mtimes[file] === null) {
-                            delete options.entry[path.basename(file).replace(path.extname(file), '')];
+
+                            // let moduleRegExp = new RegExp(path.basename(file));
+                            // for (let module of Object.keys(compilation.compiler.records.modules.byIdentifier)) {
+                            //     if (moduleRegExp.test(module)) {
+                            //         delete compilation.compiler.records.modules.usedIds[compilation.compiler.records.modules.byIdentifier[module]];
+                            //         delete compilation.compiler.records.modules.byIdentifier[module];
+                            //     }
+                            // }
+                            //
+                            // compilation.compiler.watchFileSystem.watcher.mtimes = {};
+                            // // delete compilation.compiler.files;
+                            // delete options.entry[path.basename(file).replace(path.extname(file), '')];
+                            // compilation.compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                            //
                             // for (let watcher of compilation.compiler.watchFileSystem.watcher.fileWatchers) {
                             //     if (watcher.path === file) {
                             //         console.log('DELE ' +  watcher.path);
                             //         delete compilation.compiler.watchFileSystem.watcher.fileWatchers[watcher];
                             //     }
                             // }
-                            // compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
-                            console.log(options.entry);
-                            compilation.compiler.watchFileSystem.watcher.mtimes = {};
-                            // compiler.options = new webpack3.WebpackOptionsApply().process(options, compiler);
-                            del.sync(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
-                        }
-                        if (!options.entry[path.basename(file).replace(path.extname(file), '')]) {
-                            options.entry[path.basename(file).replace(path.extname(file), '')] = [file];
-                            compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                            // // compiler.options = new webpack3.WebpackOptionsApply().process(options, compiler);
+                            // del.sync(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
+                        } else {
+                            if (!options.entry[path.basename(file).replace(path.extname(file), '')]) {
+                                options.entry[path.basename(file).replace(path.extname(file), '')] = [file];
+                                compilation.compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+                            }
                         }
                     }
                 }
 
+            } else {
+                console.log('aaaa');
+                let moduleRegExp = new RegExp(path.basename(file));
+                for (let module of Object.keys(compilation.compiler.records.modules.byIdentifier)) {
+                    if (moduleRegExp.test(module)) {
+                        delete compilation.compiler.records.modules.usedIds[compilation.compiler.records.modules.byIdentifier[module]];
+                        delete compilation.compiler.records.modules.byIdentifier[module];
+                    }
+                }
+
+                compilation.compiler.watchFileSystem.watcher.mtimes = {};
+                // delete compilation.compiler.files;
+                delete options.entry[path.basename(file).replace(path.extname(file), '')];
+                compilation.compiler.applyPluginsBailResult("entry-option", options.context, options.entry);
+
+                for (let watcher of compilation.compiler.watchFileSystem.watcher.fileWatchers) {
+                    if (watcher.path === file) {
+                        console.log('DELE ' +  watcher.path);
+                        delete compilation.compiler.watchFileSystem.watcher.fileWatchers[watcher];
+                    }
+                }
+                // compiler.options = new webpack3.WebpackOptionsApply().process(options, compiler);
+                del.sync(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
             }
+
+            // console.log(CircularJSON.stringify(compilation));
             // let fileChanged = Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)[1];
             // console.log(compilation.compiler.watchFileSystem.watcher.mtimes);
             // let options = compilation.compiler.options;
@@ -67,6 +140,9 @@ MyExampleWebpackPlugin.prototype.apply = function(compiler) {
             //     }
             //     // console.log(compilation.compiler.options.entry);
             // }
+
+
+            console.log(changeFileName);
             callback();
         })
 };

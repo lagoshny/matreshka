@@ -490,6 +490,7 @@ exports.entries = {
             return 'main';
         },
         spec: {
+            out: 'main.test',
             get handle() {
                 if (process.env.npm_config_test || (process.env.npm_config_test && process.env.npm_config_test === 'tdd')) {
                     return !!getProperty(userConf, 'entries.scripts.spec');

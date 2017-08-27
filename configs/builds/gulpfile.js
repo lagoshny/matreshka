@@ -69,8 +69,8 @@ const tasksConf = {
     jsTestBuildConfigs: {
         entry: {},
         src: [
-            // ...buildConf.entries.libs.polifyls.test,
-            // ...buildConf.entries.scripts.ts.test,
+            ...buildConf.entries.libs.polifyls.test,
+            ...buildConf.entries.scripts.ts.test,
             ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
@@ -107,6 +107,12 @@ const tasksConf = {
         handle: buildConf.entries.scripts.spec.handle,
         wbpConf: buildConf.folders.configs.webpackTestConf
     },
+    testServerConfigs: {
+        src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
+        config: buildConf.folders.configs.karmaConfig,
+        handle: buildConf.entries.scripts.spec.handle,
+        wbpConf: buildConf.folders.configs.webpackTestConf
+    },
     cssLintConfigs: {
         lint: buildConf.lints.css,
         cache: buildConf.lints.cachesDir
@@ -134,7 +140,7 @@ function clean(folder) {
             return del(buildConf.folders.main.dependencies.node, {force: true});
         }
         return helpers.isProduction() ? del([buildConf.folders.main.builds.prod.dir, buildConf.folders.main.builds.temp.dir], {force: true})
-            : del(buildConf.folders.main.builds.dev.dir, {force: true});
+            : del([buildConf.folders.main.builds.dev.dir, buildConf.folders.main.builds.temp.spec], {force: true});
     };
 
 }
@@ -165,7 +171,6 @@ gulp.task('js', gulp.parallel(
     ))
 );
 
-gulp.task('test', testTasks.testRun(tasksConf.testConfigs));
 
 gulp.task('css', gulp.series(
     css.cssLint(tasksConf.cssLintConfigs),
@@ -197,6 +202,10 @@ gulp.task('tst', gulp.series(scripts.jsBuild(tasksConf.jsTestBuildConfigs)));
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;
     helpers.buildCaches.watch = true;
+
+    gulp.watch(buildConf.watchDirs.test, {usePolling: true}, gulp.series('test'))
+        .on('unlink', helpers.deleteFilesFromCache('TEST', false));
+
     gulp.watch(buildConf.watchDirs.polifyls, {usePolling: true}, gulp.series('buildPolifyls'))
         .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.polifyls, !!buildConf.entries.libs.polifyls.out));
 
@@ -251,7 +260,8 @@ if (helpers.isDevelopment()) {
         gulp.series('dev:init',
             gulp.parallel('statics', 'js', 'css'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
-            gulp.parallel('watch', 'serve')
+            gulp.parallel('watch')
+            // gulp.parallel('watch', 'serve')
         )
     );
 }

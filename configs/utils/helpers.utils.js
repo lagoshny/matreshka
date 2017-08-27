@@ -18,6 +18,8 @@ const buildConf = require('../utils/paths.config');
 const NODE_ENV = process.env.NODE_ENV || 'dev';
 const debug = process.env.npm_config_info;
 
+exports.karmaServer = null;
+
 exports.isDevelopment = function isDevelopment() {
     return NODE_ENV === 'dev';
 };

@@ -20,8 +20,7 @@ const del = require('del');
 let changeFileName;
 
 function AddWatchWebpackPlugin() {
-};
-
+}
 AddWatchWebpackPlugin.prototype.apply = function (compiler) {
     compiler.plugin("after-compile", function (compilation, callback) {
         // Watch for root project dir
@@ -60,6 +59,7 @@ AddWatchWebpackPlugin.prototype.apply = function (compiler) {
          *
          */
         if (compilation.compiler.watchFileSystem.watcher.mtimes !== {}) {
+            console.log(compilation.compiler.watchFileSystem.watcher.mtimes);
             for (let file of Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)) {
                 // I will watch for js, ts files, and not dir.
                 if (/\.ts|\.js/.test(file) && !/___jb_tmp___/.test(file)) {
@@ -175,20 +175,20 @@ if (buildConf.entries.scripts.ts.handle) {
         tsLoader.use.push('angular2-router-loader');
     }
 }
-// if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))) {
-//     module.exports.plugins.push(
-//         new webpack3.DllReferencePlugin({
-//             manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))
-//         })
-//     )
-// }
-// if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))) {
-//     module.exports.plugins.push(
-//         new webpack3.DllReferencePlugin({
-//             manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))
-//         })
-//     )
-// }
+if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))) {
+    module.exports.plugins.push(
+        new webpack3.DllReferencePlugin({
+            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/polyfills.test.manifest.json'))
+        })
+    )
+}
+if (fs.existsSync(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))) {
+    module.exports.plugins.push(
+        new webpack3.DllReferencePlugin({
+            manifest: require(path.resolve(buildConf.entries.libs.cache.dir, 'manifest/vendors.manifest.json'))
+        })
+    )
+}
 
 if (process.env.npm_config_info) {
     module.exports.stats = {

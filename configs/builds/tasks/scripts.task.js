@@ -133,16 +133,6 @@ exports.copyVendors = function (opt) {
     }
 };
 
-exports.tst = function () {
-    return function (done) {
-        var compiler = webpack3(require(path.resolve(buildConf.folders.configs.path, 'builds','wbp.conf.js')));
-        console.log(compiler.run(function () {
-            console.log('comp run');
-        }));
-        done();
-    }
-};
-
 exports.jsBuild = function (opt) {
     let needBuildNameFiles = [];
     let polyfillsFile = {};
@@ -153,11 +143,13 @@ exports.jsBuild = function (opt) {
             needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
         }
     } else {
-        if (buildConf.entries.scripts.spec.handle) {
+        // if (buildConf.entries.scripts.spec.out) {
+        //     needBuildNameFiles.push(buildConf.entries.scripts.spec.out);
+        // } else {
             for (let file of buildConf.entries.scripts.spec.files) {
                 needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
             }
-        }
+        // }
     }
     return function jsBuild(done) {
         if (!opt || !opt.src || opt.src.length === 0) {
@@ -203,8 +195,8 @@ exports.jsBuild = function (opt) {
                             return;
                         }
                         /** We need add polyfills to test main files */
-                        if (buildConf.entries.libs.polifyls.handle && helpers.constants.testSuffixPattern.test(file.path)) {
-                            console.log(file.path);
+                        if (buildConf.entries.libs.polifyls.handle
+                            && helpers.constants.testSuffixPattern.test(file.path)) {
                             file.named = file.stem;
                             polyfillsFile.named = file.stem;
                             this.push(polyfillsFile);
@@ -212,6 +204,12 @@ exports.jsBuild = function (opt) {
                             callback();
                             return;
                         }
+
+                        // if (opt.test) {
+                        //     file.named = buildConf.entries.scripts.spec.out;
+                        //     callback(null, file);
+                        //     return;
+                        // }
 
                         /** For all test files we save their names */
                         if (/\.spec\./.test(file.path)) {

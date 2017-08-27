@@ -67,7 +67,9 @@ const tasksConf = {
         wbpConf: buildConf.folders.configs.webpackConf
     },
     jsTestBuildConfigs: {
-        entry: {},
+        entry: {
+            // out: buildConf.entries.scripts.spec.out
+        },
         src: [
             ...buildConf.entries.libs.polifyls.test,
             ...buildConf.entries.scripts.ts.test,
@@ -102,12 +104,6 @@ const tasksConf = {
         wbpLibConf: buildConf.folders.configs.webpackLibsConf
     },
     testConfigs: {
-        src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
-        config: buildConf.folders.configs.karmaConfig,
-        handle: buildConf.entries.scripts.spec.handle,
-        wbpConf: buildConf.folders.configs.webpackTestConf
-    },
-    testServerConfigs: {
         src: [...buildConf.entries.scripts.spec.builded].filter((entry) => /[^undefined]\S/.test(entry)),
         config: buildConf.folders.configs.karmaConfig,
         handle: buildConf.entries.scripts.spec.handle,
@@ -203,8 +199,8 @@ gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;
     helpers.buildCaches.watch = true;
 
-    gulp.watch(buildConf.watchDirs.test, {usePolling: true}, gulp.series('test'))
-        .on('unlink', helpers.deleteFilesFromCache('TEST', false));
+    // gulp.watch(buildConf.watchDirs.test, {usePolling: true}, gulp.series('test'))
+    //     .on('unlink', helpers.deleteFilesFromCache('TEST', false));
 
     gulp.watch(buildConf.watchDirs.polifyls, {usePolling: true}, gulp.series('buildPolifyls'))
         .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.polifyls, !!buildConf.entries.libs.polifyls.out));

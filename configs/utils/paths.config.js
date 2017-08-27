@@ -511,6 +511,9 @@ exports.entries = {
                 }
                 return [];
             },
+            get allTestFiles() {
+                return path.resolve(exports.folders.main.builds.temp.spec, '**/*.js')
+            },
             get builded() {
                 if (this.handle) {
                     let files = [
@@ -758,6 +761,7 @@ exports.watchDirs = {
         }
         return [...exports.entries.scripts.js.files.map(file => path.resolve(path.dirname(file), '**/*.js'))];
     },
+    test: exports.entries.scripts.spec.allTestFiles,
     resources: exports.folders.main.src.resources
 };
 

@@ -18,7 +18,22 @@ const buildConf = require('../utils/paths.config');
 const NODE_ENV = process.env.NODE_ENV || 'dev';
 const debug = process.env.npm_config_info;
 
-exports.karmaServer = null;
+
+exports.logStatsOptions = {
+    colors: true,
+    hash: false,
+    timings: false,
+    chunks: false,
+    chunkModules: false,
+    modules: false,
+    children: true,
+    version: true,
+    cached: false,
+    cachedAssets: false,
+    reasons: false,
+    source: false,
+    errorDetails: false
+};
 
 exports.isDevelopment = function isDevelopment() {
     return NODE_ENV === 'dev';
@@ -63,6 +78,9 @@ exports.buildCaches = {
     },
     scripts: {
         name: buildConf.cacheName.js
+    },
+    test: {
+        name: buildConf.cacheName.test
     },
     polifyls: {
         dir: buildConf.entries.libs.cache.dir,

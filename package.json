@@ -62,6 +62,7 @@
     "gulp-uglifycss": "^1.0.8",
     "gulp-uglifyjs": "^0.6.2",
     "gulp-util": "^3.0.8",
+    "gulplog": "^1.0.0",
     "jasmine-core": "^2.7.0",
     "karma": "^1.7.0",
     "karma-firefox-launcher": "^1.0.1",

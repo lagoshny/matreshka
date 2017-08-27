@@ -497,6 +497,12 @@ exports.entries = {
                 }
                 return false;
             },
+            get tdd() {
+                if (process.env.npm_config_test && process.env.npm_config_test === 'tdd') {
+                    return !!getProperty(userConf, 'entries.scripts.spec');
+                }
+                return false;
+            },
             get files() {
                 if (getProperty(userConf, 'entries.scripts.spec')) {
                     if (exports.entries.scripts.ts.handle && exports.entries.scripts.js.handle) {
@@ -721,6 +727,7 @@ exports.cacheName = {
     polifyls: 'polifyls',
     vendors: 'vendors',
     ts: 'ts',
+    test: 'test',
     resources: 'resources'
 };
 
@@ -761,7 +768,7 @@ exports.watchDirs = {
         }
         return [...exports.entries.scripts.js.files.map(file => path.resolve(path.dirname(file), '**/*.js'))];
     },
-    test: exports.entries.scripts.spec.allTestFiles,
+    test: exports.entries.scripts.spec.files,
     resources: exports.folders.main.src.resources
 };
 

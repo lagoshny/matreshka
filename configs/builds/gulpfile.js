@@ -8,6 +8,7 @@
 const gulp = require('gulp');
 const browsersync = require('browser-sync').create();
 const del = require('del');
+const path = require('path');
 
 const buildConf = require('../utils/paths.config');
 const helpers = require('../utils/helpers.utils');
@@ -67,20 +68,33 @@ const tasksConf = {
         wbpConf: buildConf.folders.configs.webpackConf
     },
     jsTestBuildConfigs: {
-        entry: {
-            // out: buildConf.entries.scripts.spec.out
-        },
+        entry: {},
         src: [
             ...buildConf.entries.libs.polifyls.test,
             ...buildConf.entries.scripts.ts.test,
             ...buildConf.entries.scripts.spec.files].filter((entry) => /[^undefined]\S/.test(entry)),
         handleModule: buildConf.entries.scripts.modules,
         provided: buildConf.entries.libs,
-        cache: helpers.buildCaches.scripts,
+        cache: helpers.buildCaches.test,
         devDst: buildConf.folders.main.builds.temp.spec,
         prodDst: buildConf.folders.main.builds.temp.spec,
         wbpConf: buildConf.folders.configs.webpackTestConf,
-        test: true
+        test: true,
+        tdd: false
+    },
+    jsTestTddBuildConfigs: {
+        entry: {},
+        src: [
+            ...buildConf.entries.libs.polifyls.test,
+            ...buildConf.entries.scripts.ts.test].filter((entry) => /[^undefined]\S/.test(entry)),
+        handleModule: buildConf.entries.scripts.modules,
+        provided: buildConf.entries.libs,
+        cache: helpers.buildCaches.test,
+        devDst: buildConf.folders.main.builds.temp.spec,
+        prodDst: buildConf.folders.main.builds.temp.spec,
+        wbpConf: buildConf.folders.configs.webpackTestConf,
+        test: true,
+        tdd: buildConf.entries.scripts.spec.tdd
     },
     jsCopyVendors: {
         provided: buildConf.entries.libs,
@@ -123,7 +137,7 @@ const tasksConf = {
     }
 };
 
-function clean(folder) {
+function clean(folder, file) {
     return function clean() {
         let deleteFolder = process.env.npm_config_cl || folder;
         if (deleteFolder === 'build') {
@@ -135,10 +149,12 @@ function clean(folder) {
         if (deleteFolder === 'dep') {
             return del(buildConf.folders.main.dependencies.node, {force: true});
         }
+        if (deleteFolder === 'tests') {
+            return del(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
+        }
         return helpers.isProduction() ? del([buildConf.folders.main.builds.prod.dir, buildConf.folders.main.builds.temp.dir], {force: true})
             : del([buildConf.folders.main.builds.dev.dir, buildConf.folders.main.builds.temp.spec], {force: true});
     };
-
 }
 
 gulp.task('clean', clean());
@@ -152,7 +168,8 @@ gulp.task('statics', gulp.series(
 
 gulp.task('buildPolifyls', scripts.providedBuild(tasksConf.jsPolifylsConfigs));
 gulp.task('buildVendors', scripts.providedBuild(tasksConf.jsVendorsConfigs));
-gulp.task('test', testTasks.testRun(tasksConf.testConfigs));
+gulp.task('test', gulp.series(scripts.jsBuild(tasksConf.jsTestBuildConfigs),
+    scripts.jsBuild(tasksConf.jsTestTddBuildConfigs), testTasks.testRun(tasksConf.testConfigs)));
 
 gulp.task('js', gulp.parallel(
     scripts.jsLint(tasksConf.jsLintConfigs),
@@ -162,11 +179,9 @@ gulp.task('js', gulp.parallel(
         'buildVendors',
         scripts.copyVendors(tasksConf.jsCopyVendors),
         scripts.jsBuild(tasksConf.jsBuildConfigs),
-        scripts.jsBuild(tasksConf.jsTestBuildConfigs),
         'test'
     ))
 );
-
 
 gulp.task('css', gulp.series(
     css.cssLint(tasksConf.cssLintConfigs),
@@ -188,30 +203,24 @@ gulp.task('testWatch', function () {
     gulp.watch(buildConf.watchDirs.polifyls, {usePolling: true}, gulp.series('buildPolifyls')).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.polifyls, !!buildConf.entries.libs.polifyls.out));
     gulp.watch(buildConf.watchDirs.vendors, {usePolling: true}, gulp.series('buildVendors')).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.vendors, !!buildConf.entries.libs.scripts.out));
     gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js')).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
-    // gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js', statics.buildHtml(tasksConf.buildStaticConfig.html))).on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
 });
 
-// gulp.task('tst', gulp.series(scripts.copyVendors(tasksConf.jsTestCopyVendors), 'test'));
-// gulp.task('tst', gulp.series('buildPolifyls', 'buildVendors', scripts.jsBuild(tasksConf.jsTestBuildConfigs), 'test'));
 gulp.task('tst', gulp.series(scripts.jsBuild(tasksConf.jsTestBuildConfigs)));
 
 gulp.task('watch', function () {
     helpers.buildCaches.polifyls.watch = true;
     helpers.buildCaches.watch = true;
-
-    // gulp.watch(buildConf.watchDirs.test, {usePolling: true}, gulp.series('test'))
-    //     .on('unlink', helpers.deleteFilesFromCache('TEST', false));
-
-    gulp.watch(buildConf.watchDirs.polifyls, {usePolling: true}, gulp.series('buildPolifyls'))
-        .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.polifyls, !!buildConf.entries.libs.polifyls.out));
-
-    gulp.watch(buildConf.watchDirs.vendors, {usePolling: true}, gulp.series('buildVendors'))
-        .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.vendors, !!buildConf.entries.libs.scripts.out));
-
     if (!buildConf.entries.scripts.modules) {
         gulp.watch(buildConf.watchDirs.js, {usePolling: true}, gulp.series('js'))
             .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.js, !!buildConf.entries.scripts.out));
     }
+    if (buildConf.entries.scripts.spec.tdd) {
+        gulp.watch(buildConf.watchDirs.test).on('unlink', (file) => clean('tests', file)());
+    }
+    gulp.watch(buildConf.watchDirs.polifyls, {usePolling: true}, gulp.series('buildPolifyls'))
+        .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.polifyls, !!buildConf.entries.libs.polifyls.out));
+    gulp.watch(buildConf.watchDirs.vendors, {usePolling: true}, gulp.series('buildVendors'))
+        .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.vendors, !!buildConf.entries.libs.scripts.out));
     gulp.watch(buildConf.watchDirs.css, {usePolling: true}, gulp.series('css', statics.buildHtml(tasksConf.buildStaticConfig.html)))
         .on('unlink', helpers.deleteFilesFromCache(buildConf.cacheName.css, !!buildConf.entries.css.out));
     gulp.watch(buildConf.lints.configsDir, {usePolling: true}, gulp.series('clean:lintsCache'));
@@ -256,8 +265,7 @@ if (helpers.isDevelopment()) {
         gulp.series('dev:init',
             gulp.parallel('statics', 'js', 'css'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
-            gulp.parallel('watch')
-            // gulp.parallel('watch', 'serve')
+            gulp.parallel('watch', 'serve')
         )
     );
 }

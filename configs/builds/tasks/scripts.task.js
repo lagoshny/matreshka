@@ -11,6 +11,7 @@ const webpackStream = require('webpack-stream');
 const pipedWebpack = require('piped-webpack');
 const del = require('del');
 const glob = require('glob');
+const gutil = require('gulp-util');
 
 const buildConf = require('../../utils/paths.config');
 const helpers = require('../../utils/helpers.utils');
@@ -143,18 +144,22 @@ exports.jsBuild = function (opt) {
             needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
         }
     } else {
-        // if (buildConf.entries.scripts.spec.out) {
-        //     needBuildNameFiles.push(buildConf.entries.scripts.spec.out);
-        // } else {
+        if (opt.tdd) {
+            needBuildNameFiles.push(...buildConf.entries.scripts.ts.test.map(file => path.basename(file).replace(/\.[^.]+$/, "")))
+        } else {
             for (let file of buildConf.entries.scripts.spec.files) {
                 needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
             }
-        // }
+        }
     }
     return function jsBuild(done) {
-        if (!opt || !opt.src || opt.src.length === 0) {
+        if (!opt || !opt.src || opt.src.length === 0 || opt.test && !buildConf.entries.scripts.spec.handle) {
             done();
             return;
+        }
+        let webpackConfig = require(opt.wbpConf);
+        if (opt.test) {
+            webpackConfig.watch = !!opt.tdd;
         }
         return gulp.src(opt.src)
             .pipe($.plumber())
@@ -205,12 +210,6 @@ exports.jsBuild = function (opt) {
                             return;
                         }
 
-                        // if (opt.test) {
-                        //     file.named = buildConf.entries.scripts.spec.out;
-                        //     callback(null, file);
-                        //     return;
-                        // }
-
                         /** For all test files we save their names */
                         if (/\.spec\./.test(file.path)) {
                             file.named = file.stem;
@@ -230,7 +229,16 @@ exports.jsBuild = function (opt) {
                         file.named = opt.entry.out || file.stem;
                         callback(null, file);
                     }),
-                    webpackStream(require(opt.wbpConf), webpack3),
+                    webpackStream(webpackConfig, webpack3, function (err, stats) {
+                        if (err) {
+                            return;
+                        }
+                        // if (opt.test) {
+                        //     gutil.log(stats.toString("errors-only"));
+                        //     return;
+                        // }
+                        gutil.log(stats.toString(helpers.logStatsOptions));
+                    }),
                     $.if(helpers.isDevelopment(), gulp.dest(function (file) {
                         if (/\.spec/.test(file.stem)) {
                             return buildConf.folders.main.builds.temp.spec;
@@ -251,130 +259,6 @@ exports.jsBuild = function (opt) {
                     done();
                 }
             })
-    }
-};
-
-exports.testFilesBuild = function (opt) {
-    // // When run build, we need to check if already polifyls files exists
-    // try {
-    //     opt.cache.lastModify = JSON.parse(fs.readFileSync(opt.cache.cacheLastModify));
-    //     let existFiles = fs.readdirSync(opt.entry.dir);
-    //     let srcFiles = opt.src.map(function (file) {
-    //         return file.replace(`${opt.entry.dir}\\`, "")
-    //     });
-    //     if (Object.keys(opt.cache.lastModify).length === srcFiles.length) {
-    //         for (let file of srcFiles) {
-    //             let filePattern = new RegExp(file);
-    //             let foundedFile = existFiles.filter((entry) => filePattern.test(entry));
-    //             if (foundedFile.length === 0) {
-    //                 opt.cache.needRebuild = true;
-    //                 break;
-    //             }
-    //             let fullPathToFoundedFile = path.resolve(opt.entry.dir, ...foundedFile);
-    //             let foundedFileStats = fs.statSync(fullPathToFoundedFile);
-    //             opt.cache.needRebuild = !(opt.cache.lastModify[fullPathToFoundedFile].mtime === foundedFileStats.mtime.toJSON());
-    //         }
-    //     } else {
-    //         opt.cache.lastModify = {};
-    //         // console.log('aaaa');
-    //     }
-    // } catch (e) {
-    //     // console.log(e);
-    //     opt.cache.needRebuild = true;
-    // }
-    let needBuildNameFiles = [];
-    let polyfillsFile = {};
-    if (!opt.test) {
-        if (buildConf.entries.libs.polifyls.handle) {
-            needBuildNameFiles.push(buildConf.entries.scripts.polyfillsOut);
-        } else if (buildConf.entries.scripts.ts.handle) {
-            needBuildNameFiles.push(glob.sync(...buildConf.entries.scripts.ts.files).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
-        }
-    } else {
-        if (buildConf.entries.scripts.spec.handle) {
-            for (let file of buildConf.entries.scripts.spec.files) {
-                needBuildNameFiles.push(...glob.sync(file).map(file => path.basename(file).replace(/\.[^.]+$/, "")));
-            }
-        }
-    }
-    return function testFilesBuild(done) {
-        if (opt && !opt.entry.handle) {
-            done();
-            return;
-        }
-        return gulp.src(opt.src)
-            .pipe($.plumber())
-            .pipe(
-                combiner(
-                    // $.if(helpers.isDevelopment(),
-                    //     combiner(
-                    //         $.cached(opt.cache.name),
-                    //         $.cond(helpers.mode.isDebug(), $.debug({title: `${opt.cache.title} cached files`})),
-                    //         $.if(!!opt.entry.out, $.remember(opt.cache.name)),
-                    //         through2(function (file, enc, callback) {
-                    //             opt.cache.lastModify[file.path] = {mtime: file.stat.mtime.toJSON()};
-                    //             callback(null, file);
-                    //         })
-                    //     )
-                    // ),
-                    // $.if(!opt.handleModules,
-                    //     combiner(
-                    //         $.if(helpers.isDevelopment(), $.sourcemaps.init()),
-                    //         $.if(!!opt.entry.out, $.concat(`${opt.entry.out}.js`)),
-                    //         $.if(helpers.isDevelopment(), $.sourcemaps.write()),
-                    //         $.debug({title: `${opt.cache.title} build files`}),
-                    //         $.if(helpers.isDevelopment(), gulp.dest(opt.cache.dir))
-                    //     )
-                    // ),
-                    $.if(opt.handleModules,
-                        combiner(
-                            through2(function (file, enc, callback) {
-                                if (buildConf.entries.libs.polifyls.handle
-                                    && buildConf.entries.libs.polifyls.all.find(filePath => filePath === file.path)) {
-                                    polyfillsFile = file;
-                                    callback();
-                                    return;
-                                }
-                                /** We need add polyfills to test main files */
-                                if (buildConf.entries.libs.polifyls.handle && helpers.constants.testSuffixPattern.test(file.path)) {
-                                    console.log(file.path);
-                                    file.named = file.stem;
-                                    polyfillsFile.named = file.stem;
-                                    this.push(polyfillsFile);
-                                    this.push(file);
-                                    callback();
-                                    return;
-                                }
-
-                                /** For all test files we save their names */
-                                if (/\.spec\./.test(file.path)) {
-                                    file.named = file.stem;
-                                    callback(null, file);
-                                    return;
-                                }
-                                /** Else we do file name as out, or their original name */
-                                file.named = opt.entry.out || file.stem;
-                                callback(null, file);
-                            }),
-                            webpackStream(require(opt.wbpConf), webpack3),
-                            $.if(helpers.isDevelopment(), gulp.dest(function (file) {
-                                if (/\.spec/.test(file.stem)) {
-                                    return buildConf.folders.main.builds.temp.spec;
-                                }
-                                return opt.devDst;
-                            }))
-                        )
-                    )
-                )
-            )
-            .pipe($.if(helpers.isProduction(), combiner(
-                $.rev(),
-                $.debug({title: `${opt.cache.title} build files`}),
-                gulp.dest(opt.dst))
-            ))
-            .on('end', function () {
-                done();
-            });
     }
 };
 

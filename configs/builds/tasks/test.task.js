@@ -10,12 +10,17 @@ const Server = require('karma').Server;
 exports.testRun = function (opt) {
     const tdd = process.env.npm_config_test && process.env.npm_config_test === 'tdd';
     return function testRun(done) {
-        new Server({
-            configFile: opt.config,
-            autoWatch: tdd,
-            singleRun: !tdd,
-            files: opt.src
-        }, done).start();
-        done();
+        if (opt.handle) {
+            new Server({
+                configFile: opt.config,
+                autoWatch: tdd,
+                singleRun: !tdd,
+                files: opt.src
+            }, done).start();
+            done();
+        } else {
+            done();
+        }
     }
+
 };

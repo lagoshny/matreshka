@@ -84,7 +84,7 @@
         {
           "dir": "./app",
           "files": [
-            "*.spec.ts"
+            "**/*.spec.ts"
           ]
         }
       ]

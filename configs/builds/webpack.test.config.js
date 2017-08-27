@@ -15,10 +15,8 @@ const helpers = require('../utils/helpers.utils');
 
 const SingleEntryPlugin = require("webpack/lib/SingleEntryPlugin");
 const path = require('path');
-const del = require('del');
 
 let changeFileName;
-
 function AddWatchWebpackPlugin() {
 }
 AddWatchWebpackPlugin.prototype.apply = function (compiler) {
@@ -27,6 +25,7 @@ AddWatchWebpackPlugin.prototype.apply = function (compiler) {
         compilation.contextDependencies.push(path.resolve(buildConf.folders.main.src.dir));
         callback();
     });
+
 
     compiler.plugin("make", function (compilation, callback) {
         if (changeFileName) {
@@ -59,16 +58,13 @@ AddWatchWebpackPlugin.prototype.apply = function (compiler) {
          *
          */
         if (compilation.compiler.watchFileSystem.watcher.mtimes !== {}) {
-            console.log(compilation.compiler.watchFileSystem.watcher.mtimes);
-            for (let file of Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes)) {
+            let keys = Object.keys(compilation.compiler.watchFileSystem.watcher.mtimes);
+            for (let file of keys.filter((item, pos) => keys.indexOf(item) === pos)) {
                 // I will watch for js, ts files, and not dir.
                 if (/\.ts|\.js/.test(file) && !/___jb_tmp___/.test(file)) {
                     // If mtimes exist, and time file changed is not null, then we save filePath
                     if (compilation.compiler.watchFileSystem.watcher.mtimes[file] !== null) {
                         changeFileName = file;
-                    } else {
-                        // If mtimes exist, and time file changed time is NULL, then we delete builded file
-                        del.sync(file.replace(path.dirname(file), buildConf.folders.main.builds.temp.spec).replace('.ts', '.js'), {force: true});
                     }
                 }
             }
@@ -102,8 +98,7 @@ module.exports = {
         extensions: ['.ts', '.js']
     },
     profile: true,
-    bail: helpers.isProduction(),
-    watch: helpers.isDevelopment()
+    bail: helpers.isProduction()
 };
 
 
@@ -137,8 +132,8 @@ if (buildConf.entries.scripts.ts.handle) {
                     configFileName: buildConf.tsConf,
                     compilerOptions: {
                         isolatedModules: helpers.isDevelopment(),
-                    }
-
+                    },
+                    silent: true
                 }
             }
         ],

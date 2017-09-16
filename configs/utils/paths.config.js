@@ -33,6 +33,9 @@ const defConf = {
     get mainDir() {
         return path.resolve(currDir, './main');
     },
+    get mainNameDir() {
+        return './main';
+    },
     get srcDir() {
         return path.resolve(this.mainDir, './src');
     },
@@ -110,8 +113,16 @@ const defConf = {
         return path.resolve(this.mainDir, './builds');
     },
 
+    get buildsNameDir() {
+        return './builds';
+    },
+
     get devDir() {
         return path.resolve(this.buildsDir, './development');
+    },
+
+    get devNameDir() {
+        return './development';
     },
     get devHtmlDir() {
         return path.resolve(this.devDir, './');
@@ -137,6 +148,9 @@ const defConf = {
 
     get prodDir() {
         return path.resolve(this.buildsDir, './production');
+    },
+    get prodNameDir() {
+        return './production';
     },
     get prodHtmlDir() {
         return path.resolve(this.prodDir, './');
@@ -253,6 +267,9 @@ exports.folders = {
         get dir() {
             return getProperty(userConf, `${rootDirsProp}.dir`) ? path.resolve(currDir, ucDirs.main.dir) : defConf.mainDir
         },
+        get nameDir() {
+            return getProperty(userConf, `${rootDirsProp}.dir`) ? ucDirs.main.dir : defConf.mainNameDir;
+        },
         src: {
             get dir() {
                 return getProperty(userConf, `${rootDirsProp}.src.dir`) ? path.resolve(exports.folders.main.dir, ucDirs.main.src.dir) : defConf.srcDir;
@@ -262,6 +279,10 @@ exports.folders = {
             get dir() {
                 return getProperty(userConf, `${rootDirsProp}.builds.dir`)
                     ? path.resolve(exports.folders.main.dir, ucDirs.main.builds.dir) : defConf.buildsDir
+            },
+            get nameDir() {
+                return getProperty(userConf, `${rootDirsProp}.builds.dir`)
+                    ? ucDirs.main.builds.dir : defConf.buildsNameDir;
             },
             temp: {
                 get dir() {
@@ -283,6 +304,10 @@ exports.folders = {
                 get dir() {
                     return getProperty(userConf, `${rootDirsProp}.builds.dev.dir`)
                         ? path.resolve(exports.folders.main.builds.dir, ucDirs.main.builds.dev.dir) : defConf.devDir
+                },
+                get nameDir() {
+                    return getProperty(userConf, `${rootDirsProp}.builds.dev.dir`)
+                        ? ucDirs.main.builds.dev.dir : defConf.devNameDir;
                 },
                 get publicPath() {
                     return getProperty(userConf, `${rootDirsProp}.builds.dev.js`)
@@ -351,6 +376,10 @@ exports.folders = {
                     return getProperty(userConf, `${rootDirsProp}.builds.prod.dir`)
                         ? path.resolve(exports.folders.main.builds.dir, ucDirs.main.builds.prod.dir) : defConf.prodDir
                 },
+                get nameDir() {
+                    return getProperty(userConf, `${rootDirsProp}.builds.prod.dir`)
+                        ? ucDirs.main.builds.prod.dir : defConf.prodNameDir;
+                },
                 get publicPath() {
                     return getProperty(userConf, `${rootDirsProp}.builds.prod.js`)
                         ? `/${ucDirs.main.builds.prod.js}/` : defConf.prodPublicPath;
@@ -373,10 +402,10 @@ exports.folders = {
                 },
                 get cssFiles() {
                     if (exports.entries.css.out) {
-                        return [path.resolve(this.css, `${exports.entries.css.out}.css`)];
+                        return [path.resolve(this.css, `${exports.entries.css.out}-*.css`)];
                     }
-                    let cssCommonFileNames = exports.entries.css.commonStyles.replace(path.dirname(exports.entries.css.commonStyles), this.css);
-                    let cssFileNames = exports.entries.css.files.map(file => file.replace(path.dirname(file), this.css));
+                    let cssCommonFileNames = exports.entries.css.commonStyles.replace(path.dirname(exports.entries.css.commonStyles), this.css).replace('.css', '-*.css');
+                    let cssFileNames = exports.entries.css.files.map(file => file.replace(path.dirname(file), this.css).replace('.css', '-*.css'));
                     return [...cssCommonFileNames, ...cssFileNames];
                 },
                 get js() {
@@ -387,22 +416,22 @@ exports.folders = {
                     if (exports.entries.scripts.out) {
                         return [path.resolve(this.js, `${exports.entries.scripts.out}.js`)];
                     }
-                    let tsFileNames = exports.entries.scripts.ts.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '.js'));
-                    let jsFileNames = exports.entries.scripts.js.files.map(file => file.replace(path.dirname(file), this.js));
+                    let tsFileNames = exports.entries.scripts.ts.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '-*.js'));
+                    let jsFileNames = exports.entries.scripts.js.files.map(file => file.replace(path.dirname(file), this.js).replace('.js', '-*.js'));
                     return [...tsFileNames, ...jsFileNames];
                 },
                 get polyfillsFiles() {
                     if (exports.entries.libs.polifyls.out) {
                         return [path.resolve(this.js, `${exports.entries.libs.polifyls.out}.js`)];
                     }
-                    let polyfillsFileNames = exports.entries.libs.polifyls.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '.js'));
+                    let polyfillsFileNames = exports.entries.libs.polifyls.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '-*.js'));
                     return [...polyfillsFileNames];
                 },
                 get vendorsFiles() {
                     if (exports.entries.libs.scripts.out) {
                         return [path.resolve(this.js, `${exports.entries.libs.scripts.out}.js`)];
                     }
-                    let vendorsFileNames = exports.entries.libs.scripts.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '.js'));
+                    let vendorsFileNames = exports.entries.libs.scripts.files.map(file => file.replace(path.dirname(file), this.js).replace('.ts', '-*.js'));
                     return [...vendorsFileNames];
                 },
                 get resources() {

@@ -73,7 +73,7 @@ if (buildConf.entries.scripts.ts.handle) {
                 options: {
                     //Fo speed build we are using this loader options, with TS isolatedModules compiler options
                     transpileOnly: helpers.isDevelopment(),
-                    configFileName: buildConf.tsConf,
+                    configFile: buildConf.tsConf,
                     compilerOptions: {
                         isolatedModules: helpers.isDevelopment(),
                     }

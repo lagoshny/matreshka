@@ -249,6 +249,9 @@ exports.jsBuild = function (opt) {
             .pipe($.if(helpers.isProduction(),
                 combiner(
                     $.rev(),
+                    $.revReplace({
+                        manifest: gulp.src([opt.manifest.img.file], {allowEmpty: true})
+                    }),
                     gulp.dest(opt.prodDst)
                 )))
             .on('data', function (file) {
@@ -326,17 +329,23 @@ exports.providedBuild = function (opt) {
                                 file.named = opt.entry.out || file.stem;
                                 callback(null, file);
                             }),
-                            pipedWebpack(require(opt.wbpLibConf)),
-                            $.if(helpers.isDevelopment(), gulp.dest(opt.cache.dir))
+                            pipedWebpack(require(opt.wbpLibConf))
+                        )
+                    ),
+                    $.if(helpers.isDevelopment(), gulp.dest(opt.cache.dir)),
+                    $.if(helpers.isProduction(), combiner(
+                            $.rev(),
+                            $.debug({title: `${opt.cache.title} build files`}),
+                            gulp.dest(opt.cache.dir)
                         )
                     )
-                )
-            ))
-            .pipe($.if(helpers.isProduction(), combiner(
-                $.rev(),
-                $.debug({title: `${opt.cache.title} build files`}),
-                gulp.dest(opt.dst))
-            ))
+                ))
+            )
+            // .pipe($.if(helpers.isProduction(), combiner(
+            //     $.rev(),
+            //     $.debug({title: `${opt.cache.title} build files`}),
+            //     gulp.dest(opt.dst))
+            // ))
             .on('end', function () {
                 if (opt.cache.needRebuild && helpers.isDevelopment()) {
                     helpers.createFolder(opt.cache.dir);

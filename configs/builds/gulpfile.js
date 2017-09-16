@@ -65,7 +65,8 @@ const tasksConf = {
         cache: helpers.buildCaches.scripts,
         devDst: buildConf.folders.main.builds.dev.js,
         prodDst: buildConf.folders.main.builds.prod.js,
-        wbpConf: buildConf.folders.configs.webpackConf
+        wbpConf: buildConf.folders.configs.webpackConf,
+        manifest: buildConf.manifest
     },
     jsTestBuildConfigs: {
         entry: {},
@@ -161,7 +162,6 @@ gulp.task('clean', clean());
 
 gulp.task('statics', gulp.series(
     statics.buildFonts(tasksConf.buildStaticConfig.fonts),
-    statics.buildImages(tasksConf.buildStaticConfig.images),
     statics.buildResources(tasksConf.buildStaticConfig.resources)
     )
 );
@@ -263,7 +263,7 @@ if (helpers.isDevelopment()) {
 
     gulp.task('dev',
         gulp.series('dev:init',
-            gulp.parallel('statics', 'js', 'css'),
+            gulp.parallel('statics', statics.buildImages(tasksConf.buildStaticConfig.images), 'js', 'css'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
             gulp.parallel('watch', 'serve')
         )
@@ -286,6 +286,7 @@ if (helpers.isProduction()) {
 
     gulp.task('prod',
         gulp.series(clean(), 'prod:init',
+            statics.buildImages(tasksConf.buildStaticConfig.images),
             gulp.parallel('statics', 'css', 'js'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
             clean('cache')

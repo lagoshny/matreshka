@@ -10,16 +10,16 @@
         "temp": "tmp",
         "dev": {
           "dir": "development",
-          "html": "",
+          "html": "./",
           "img": "img",
           "fonts": "fonts",
           "css": "css",
           "js": "js",
-          "resources": ""
+          "resources": "./"
         },
         "prod": {
           "dir": "production",
-          "html": "",
+          "html": "./",
           "img": "img",
           "fonts": "fonts",
           "css": "css",
@@ -43,6 +43,15 @@
         ]
       }
     ],
+    "fonts": [
+      {
+        "dir": "fonts/**",
+        "files": [
+          "*"
+        ],
+        "extensions": "*"
+      }
+    ],
     "css": {
       "out": "styles.css",
       "commonStyles": {
@@ -54,7 +63,8 @@
       "polifyls": {
         "dir": "./provided/scripts",
         "files": [
-          "polyfills.ts", "polyfills.test.ts"
+          "polyfills.ts",
+          "polyfills.test.ts"
         ]
       },
       "scripts": {
@@ -76,7 +86,8 @@
         {
           "dir": "./",
           "files": [
-            "main.ts", "main.test.ts"
+            "main.ts",
+            "main.test.ts"
           ]
         }
       ],

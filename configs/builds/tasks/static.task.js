@@ -19,9 +19,9 @@ exports.buildHtml = function (opt) {
                         ...buildConf.folders.main.builds.dev.polyfillsFiles,
                         ...buildConf.folders.main.builds.dev.vendorsFiles,
                         ...buildConf.folders.main.builds.dev.jsFiles,
-                        ...buildConf.folders.main.builds.dev.cssFiles], {read: false, allowEmpty:true}),
+                        ...buildConf.folders.main.builds.dev.cssFiles], {read: false, allowEmpty: true}),
                     {
-                        ignorePath: ['../../main/builds/development/'],
+                        ignorePath: [`../../${buildConf.folders.main.nameDir}/${buildConf.folders.main.builds.nameDir}/${buildConf.folders.main.builds.dev.nameDir}/`],
                         addRootSlash: false
                     }),
                 gulp.dest(opt.devDst)
@@ -31,9 +31,9 @@ exports.buildHtml = function (opt) {
                         ...buildConf.folders.main.builds.prod.polyfillsFiles,
                         ...buildConf.folders.main.builds.prod.vendorsFiles,
                         ...buildConf.folders.main.builds.prod.jsFiles,
-                        ...buildConf.folders.main.builds.prod.cssFiles], {read: false, allowEmpty:true}),
+                        ...buildConf.folders.main.builds.prod.cssFiles], {read: false, allowEmpty: true}),
                     {
-                        ignorePath: '../../main/builds/production/',
+                        ignorePath: [`../../${buildConf.folders.main.nameDir}/${buildConf.folders.main.builds.nameDir}/${buildConf.folders.main.builds.prod.nameDir}/`],
                         addRootSlash: false
                     }),
                 $.revReplace({

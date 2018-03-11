@@ -12,4 +12,5 @@ import { enableProdMode } from '@angular/core';
 
 enableProdMode();
 
-platformBrowser().bootstrapModuleFactory(AppModuleNgFactory);
+platformBrowser()
+    .bootstrapModuleFactory(AppModuleNgFactory);

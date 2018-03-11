@@ -42,9 +42,8 @@ project:
     resources: ./
   tempDir: ./main/builds/tmp
   lints:
-    css: false
-    js: false
-    ts: false
+    css: true
+    ts: true
 frameworks:
   angular:
     configs:

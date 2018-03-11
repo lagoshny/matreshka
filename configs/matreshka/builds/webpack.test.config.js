@@ -159,7 +159,7 @@ if (projectConf.src.scripts.isTs() || projectConf.isUseFrameworkByName('angular'
         if (projectConf.getFrameWorkConfigByName('angular').isAngularInlineStyles()) {
             module.exports.module.rules.push(
                 {
-                    test: /\.(css)$/,
+                    test: /\.(css)$ | \.(scss)$/,
                     use: {
                         loader: 'raw-loader'
                     },
@@ -168,7 +168,6 @@ if (projectConf.src.scripts.isTs() || projectConf.isUseFrameworkByName('angular'
                 {
                     test: /\.(scss)$/,
                     use: [
-                        'raw-loader',
                         'sass-loader'
                     ],
                     include: [projectConf.src.getSrcDir()]

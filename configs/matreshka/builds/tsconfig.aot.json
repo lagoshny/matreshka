@@ -8,6 +8,7 @@
     "module": "es2015",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
+    "strictPropertyInitialization": false,
     "lib": [
       "es2016",
       "dom"
@@ -23,6 +24,7 @@
   "angularCompilerOptions": {
     "genDir": "../../../main/builds/tmp/aot",
     "entryModule": "../../../main/src/app/app.module#AppModule",
-    "skipMetadataEmit" : true
+    "skipMetadataEmit" : true,
+    "preserveWhitespaces": false
   }
 }

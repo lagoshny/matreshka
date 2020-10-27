@@ -4,26 +4,30 @@ project:
     dir: ./main/src
     entries:
       html:
-      - ./*.html
+        - ./*.html
       img:
-      - ./resources/img/*
+        - ./resources/img/*.*
       fonts:
-      - ./resources/fonts/**/*.*
+        - ./resources/fonts/**/*.*
       styles:
-      - ./resources/styles/styles.css
-      - ./vendors/styles/*.css
+        useSass: true
+        common:
+          includePaths:
+            - ./resources/styles
+          files:
+            - ./resources/styles/styles.scss
       scripts:
         modules: true
         ts:
           vendors:
-          - ./vendors/scripts/vendors.ts
+            - ./vendors/scripts/vendors.ts
         polifyls:
-        - ./vendors/scripts/polyfills.ts
-        - ./vendors/scripts/polyfills.test.ts
+          - ./vendors/scripts/polyfills.ts
+          - ./vendors/scripts/polyfills.test.ts
         test:
           specs: ./app/**/*.spec.ts
       resources:
-      - ./*.ico
+        - ./*.ico
   devStruct:
     dir: ./main/builds/development
     html: ./
@@ -42,8 +46,9 @@ project:
     resources: ./
   tempDir: ./main/builds/tmp
   lints:
-    css: true
-    ts: true
+    css: false
+    js: false
+    ts: false
 frameworks:
   angular:
     configs:

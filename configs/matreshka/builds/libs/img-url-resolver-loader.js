@@ -28,7 +28,7 @@ module.exports = function (content) {
         return content;
     }
 
-    if (contentType === 'css') {
+    if (contentType === 'css' || contentType === 'scss') {
         return cssUrlsReg.reduce((content, reg) => {
             return content.replace(reg, (all, lead, quote1, currPath, quote2) => {
                 return lead + quote1 + `${newPath}/${path.basename(currPath)}` + quote2;

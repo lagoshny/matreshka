@@ -126,7 +126,14 @@ exports.jsLint = function (opt) {
 
 exports.copyVendors = function (opt) {
     return function copyVendors() {
-        return gulp.src([helpers.isProduction() ? `${opt.cache}/*-*.js` : `${opt.cache}/*.js`, `!${opt.cache}/*.${helpers.constants.testSuffix}.js`], {allowEmpty: true})
+        const files = [];
+        if (helpers.isProduction()) {
+            files.push(`${opt.cache}/*-*.js`);
+        } else {
+            files.push(`${opt.cache}/*.js`);
+            files.push(`${opt.cache}/*.js.map`);
+        }
+        return gulp.src([...files, `!${opt.cache}/*.${helpers.constants.testSuffix}.js`], {allowEmpty: true})
             .pipe($.cond(helpers.mode.isDebug(), $.debug({title: 'Copy vendors'})))
             .pipe(gulp.dest(helpers.isDevelopment() ? opt.devDst : opt.prodDst));
     };

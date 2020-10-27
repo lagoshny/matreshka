@@ -1,4 +1,5 @@
 const path = require('path');
+const _ = require('lodash');
 
 let src = '';
 let dev = '';
@@ -17,7 +18,7 @@ exports.getMethods = function (srcConf, devConf, isAngularParam) {
         getTestsWatch: getTestsWatch,
         getPolifylsWatch: getPolifylsWatch,
         getVendorsWatch: getVendorsWatch,
-        getCssWatch: getCssWatch,
+        getStyleWatch: getStyleWatch,
         getJsWatch: getJsWatch
     };
 };
@@ -62,8 +63,20 @@ function getVendorsWatch() {
     }
 }
 
-function getCssWatch() {
-    return src.getStyleFiles();
+function getStyleWatch() {
+    if (_.isArray(src.getCommonStyleFiles())) {
+        const watchFiles = src.getCommonStyleFiles().map((file) => path.resolve(path.dirname(file), '*.css'));
+        if (src.isUseSass()) {
+            watchFiles.push(...src.getCommonStyleFiles().map((file) => path.resolve(path.dirname(file), '*.scss')));
+        }
+        return watchFiles;
+    }
+
+    const watchFiles = path.resolve(path.dirname(src.getCommonStyleFiles()), '*.css');
+    if (src.isUseSass()) {
+        watchFiles.push(...path.resolve(path.dirname(src.getCommonStyleFiles()), '*.scss'));
+    }
+    return watchFiles;
 }
 
 function getJsWatch() {
@@ -71,4 +84,11 @@ function getJsWatch() {
         return;
     }
     return src.scripts.getJsFiles();
+}
+
+function getFiles(files) {
+    if (_.isArray(files)) {
+        return files.map((file) => path.resolve(getSrcDir(), file));
+    }
+    return [path.resolve(getSrcDir(), files)];
 }

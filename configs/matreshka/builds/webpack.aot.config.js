@@ -87,7 +87,7 @@ if (projectConf.isUseFrameworkByName('angular')) {
             );
             module.exports.module.rules.push(
                 {
-                    test: /\.(css)$/,
+                    test: /\.(css|scss)$/,
                     use: [
                         {
                             loader: 'img-url-resolver-loader',

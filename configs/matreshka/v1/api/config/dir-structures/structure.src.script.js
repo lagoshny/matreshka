@@ -15,7 +15,7 @@ exports.getMethods = function (srcDir, scriptsConf, isAngularParam) {
         isModuleScript: isModuleScript,
         getJsFiles: getJsFiles,
         getJsVendors: getJsVendors,
-        isTs: isTs,
+        isTs: hasTsFiles,
         getTsFiles: getTsFiles,
         getTsVendors: getTsVendors,
         isTsVendors: isTsVendors,
@@ -39,25 +39,29 @@ function isModuleScript() {
 }
 
 function getJsFiles() {
-    if (!isTs() && scripts.js && scripts.js.files) {
+    if (!hasTsFiles() && scripts.js && scripts.js.files) {
         return getFiles(scripts.js.files);
     }
     return [];
 }
 
 function getJsVendors() {
-    if (!isTs() && scripts.js && scripts.js.vendors) {
+    if (!hasTsFiles() && scripts.js && scripts.js.vendors) {
         return scripts.js.vendors && getFiles(scripts.js.vendors);
     }
     return [];
 }
 
-function isTs() {
+function hasTsFiles() {
     return scripts.ts && !_.isEmpty(scripts.ts.files);
 }
 
+function hasTsVendors() {
+    return scripts.ts && !_.isEmpty(scripts.ts.vendors);
+}
+
 function getTsFiles() {
-    if (isTs()) {
+    if (hasTsFiles()) {
         return getFiles(scripts.ts.files);
     }
     return [];
@@ -112,20 +116,20 @@ function getPolifylsDir() {
 }
 
 function isTsVendors() {
-    if (isTs() && scripts.ts && scripts.ts.vendors) {
+    if (hasTsVendors() && scripts.ts && scripts.ts.vendors) {
         return !!scripts.ts.vendors;
     }
     return false;
 }
 
 function isJsVendors() {
-    if (!isTs() && scripts.js && scripts.js.vendors) {
+    if (!hasTsFiles() && scripts.js && scripts.js.vendors) {
         return !!scripts.js.vendors;
     }
 }
 
 function getVendorsDir() {
-    if (isTs() || isAngular) {
+    if (hasTsFiles() || isAngular) {
         if (scripts.ts && scripts.ts.vendors) {
             if (_.isArray(scripts.ts.vendors)) {
                 return path.resolve(srcRootDir, path.dirname(scripts.ts.vendors[0]));
@@ -148,13 +152,14 @@ function isTest() {
     return scripts.test && !_.isEmpty(scripts.test.specs);
 }
 
-
+// npm run test --tdd then all tests from project will be run after each editing any file
 function isTdd() {
-    return isTest() && (scripts.test.tdd || process.env.npm_config_test && process.env.npm_config_test === 'tdd');
+    return isTest() && (scripts.test.tdd || process.env.npm_config_tdd);
 }
 
+// // npm run test --tdd-single then only edited test will be run
 function isSingleTdd() {
-    return isTest() && (scripts.test.singleTdd || process.env.npm_config_test && process.env.npm_config_test === 'tdd-single');
+    return isTest() && (scripts.test.singleTdd || process.env.npm_config_tdd_single);
 }
 
 function getTestFiles() {

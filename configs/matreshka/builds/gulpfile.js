@@ -16,7 +16,7 @@ const projectConf = require('../v1/api/matreshka');
 const helpers = require('../utils/helpers.utils');
 
 const statics = require('./tasks/static.task');
-const css = require('./tasks/css.task');
+const style = require('./tasks/style.task');
 const scripts = require('./tasks/scripts.task');
 const testTasks = require('./tasks/test.task');
 
@@ -49,8 +49,9 @@ const tasksConf = {
             cache: helpers.buildCaches.resources
         }
     },
-    cssBuildConfig: {
-        src: projectConf.src.getStyleFiles(),
+    styleBuildConfig: {
+        src: projectConf.src.getCommonStyleFiles(),
+        useSass: projectConf.src.isUseSass(),
         out: projectConf.outputs.getStylesOutName(),
         devDst: projectConf.dev.getStylesDir(),
         prodDst: projectConf.prod.getStylesDir(),
@@ -201,7 +202,7 @@ const tasksConf = {
         handle: projectConf.src.scripts.isTest(),
         wbpConf: projectConf.webpackTestConfig
     },
-    cssLintConfigs: {
+    styleLintConfigs: {
         lint: projectConf.lint.getCss(),
         cache: projectConf.temps.getCachesLintTempDir()
     },
@@ -309,12 +310,12 @@ gulp.task('aot', gulp.parallel(
     ))
 );
 
-gulp.task('css', gulp.series(
-    css.cssLint(tasksConf.cssLintConfigs),
-    css.cssBuild(tasksConf.cssBuildConfig))
+gulp.task('style', gulp.series(
+    style.lint(tasksConf.styleLintConfigs),
+    style.build(tasksConf.styleBuildConfig))
 );
 
-gulp.task('css:linting', gulp.series(clean('tmp'), css.cssLint(tasksConf.cssLintConfigs)));
+gulp.task('style:linting', gulp.series(clean('tmp'), style.lint(tasksConf.styleLintConfigs)));
 gulp.task('js:linting', gulp.series(clean('tmp'), scripts.jsLint(tasksConf.jsLintConfigs)));
 gulp.task('ts:linting', gulp.series(clean('tmp'), scripts.tsLint(tasksConf.tsLintConfigs)));
 
@@ -342,7 +343,7 @@ gulp.task('watch', function () {
         .on('unlink', helpers.deleteFilesFromCache(CONST.CACHE_NAME.POLIFYLS, !!projectConf.outputs.getPolyfillsOutName()));
     gulp.watch(projectConf.watch.getVendorsWatch(), {usePolling: true}, gulp.series('buildVendors'))
         .on('unlink', helpers.deleteFilesFromCache(CONST.CACHE_NAME.VENDORS, !!projectConf.outputs.getVendorsOutName()));
-    gulp.watch(projectConf.watch.getCssWatch(), {usePolling: true}, gulp.series('css', statics.buildHtml(tasksConf.buildStaticConfig.html)))
+    gulp.watch(projectConf.watch.getStyleWatch(), {usePolling: true}, gulp.series('style', statics.buildHtml(tasksConf.buildStaticConfig.html)))
         .on('unlink', helpers.deleteFilesFromCache(CONST.CACHE_NAME.CSS, !!projectConf.outputs.getStylesOutName()));
     gulp.watch(projectConf.lint.getConfDir(), {usePolling: true}, gulp.series('clean:lintsCache'));
     gulp.watch(projectConf.watch.getHtmlWatch(), {usePolling: true},
@@ -355,9 +356,11 @@ gulp.task('watch', function () {
         gulp.series(statics.buildResources(tasksConf.buildStaticConfig.resources))).on('unlink', helpers.deleteFilesFromCache(CONST.CACHE_NAME.RESOURCES));
 });
 
-
 gulp.task('onlyTest', gulp.series(clean('tmpTest'), 'buildPolifyls', 'buildVendors', 'test'));
 
+gulp.task('nope', function () {
+    // NOP
+});
 
 gulp.task('serve', function () {
     browsersync.init({
@@ -373,6 +376,8 @@ gulp.task('serve', function () {
     browsersync.watch(projectConf.watch.getDevBuildWatch()).on('change', browsersync.reload);
 });
 
+let needRunTest = process.env.npm_config_test ? 'test' : 'nope';
+
 if (helpers.isDevelopment()) {
     gulp.task('dev:init', function (callback) {
         helpers.createFolder(projectConf.dev.getScriptsDir());
@@ -386,12 +391,11 @@ if (helpers.isDevelopment()) {
         callback();
     });
 
-
     gulp.task('dev',
         gulp.series('clean', 'dev:init',
-            gulp.parallel('statics', statics.buildImages(tasksConf.buildStaticConfig.images), 'js', 'css'),
+            gulp.parallel('statics', statics.buildImages(tasksConf.buildStaticConfig.images), 'js', 'style'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
-            gulp.parallel('test', 'watch', 'serve')
+            gulp.parallel(needRunTest, 'watch', 'serve')
         )
     );
 
@@ -401,9 +405,9 @@ if (helpers.isDevelopment()) {
             'buildPolifyls',
             'buildVendors',
             scripts.copyVendors(tasksConf.jsCopyVendors),
-            gulp.parallel('statics', 'css', 'aot'),
+            gulp.parallel('statics', 'style', 'aot'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
-            gulp.parallel('test', 'watch', 'serve')
+            gulp.parallel(needRunTest, 'watch', 'serve')
         )
     );
 }
@@ -426,7 +430,7 @@ if (helpers.isProduction()) {
     gulp.task('prod',
         gulp.series(clean(), 'prod:init',
             statics.buildImages(tasksConf.buildStaticConfig.images),
-            gulp.parallel('statics', 'css', 'js'),
+            gulp.parallel('statics', 'style', 'js'),
             statics.buildHtml(tasksConf.buildStaticConfig.html),
             clean('cache')
         )
@@ -435,7 +439,7 @@ if (helpers.isProduction()) {
     gulp.task('prod:aot',
         gulp.series(clean(), 'prod:init',
             statics.buildImages(tasksConf.buildStaticConfig.images),
-            gulp.parallel('statics', 'css', 'aot'),
+            gulp.parallel('statics', 'style', 'aot'),
             statics.buildHtml(tasksConf.buildStaticConfig.html)
         )
     );

@@ -91,7 +91,7 @@
     "html-loader": "^0.5.5",
     "jasmine": "^2.9.0",
     "js-yaml": "^3.11.0",
-    "karma": "^2.0.0",
+    "karma": "^6.3.14",
     "karma-firefox-launcher": "^1.1.0",
     "karma-jasmine": "^1.1.1",
     "karma-phantomjs-launcher": "^1.0.4",
